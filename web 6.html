@@ -1,0 +1,2711 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Task Management</title>
+    <style>
+        :root {
+            /* Light Theme */
+            --primary-color: #1a62e8;
+            --secondary-color: #f1f3f4;
+            --hover-color: #e8f0fe;
+            --border-color: #dadce0;
+            --text-color: #202124;
+            --text-secondary-color: #5f6368;
+            --white-color: #ffffff;
+            --success-color: #0f9d58;
+            --warning-color: #f4b400;
+            --danger-color: #d93025;
+            --priority-low-color: #1e88e5;
+            --priority-medium-color: var(--warning-color);
+            --priority-high-color: var(--danger-color);
+            --font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+            --border-radius-sm: 4px;
+            --border-radius-md: 8px;
+            --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            --column-bg: #ffffff;
+            --body-bg: #f8f9fa;
+            --header-bg: var(--primary-color);
+            --input-bg: #ffffff;
+            --ai-primary: #6e00ff;
+            --ai-accent: #00f7ff;
+            --placeholder-bg: rgba(26, 98, 232, 0.1);
+            --placeholder-border: var(--primary-color);
+
+            /* Dark Theme Variables (will be set via JS) */
+            --dark-primary-color: #8ab4f8;
+            --dark-secondary-color: #5f6368;
+            --dark-hover-color: #3c4043;
+            --dark-border-color: #5f6368;
+            --dark-text-color: #e8eaed;
+            --dark-text-secondary-color: #9aa0a6;
+            --dark-white-color: #202124;
+            --dark-success-color: #81c995;
+            --dark-warning-color: #fdd663;
+            --dark-danger-color: #f28b82;
+            --dark-priority-low-color: #8ab4f8;
+            --dark-priority-medium-color: var(--dark-warning-color);
+            --dark-priority-high-color: var(--dark-danger-color);
+            --dark-column-bg: #292a2d;
+            --dark-body-bg: #202124;
+            --dark-header-bg: #1c3aa9;
+            --dark-input-bg: #35363a;
+            --dark-ai-primary: #8a63ff;
+            --dark-ai-accent: #00f7ff;
+            --dark-placeholder-bg: rgba(138, 180, 248, 0.1);
+            --dark-placeholder-border: var(--dark-primary-color);
+        }
+
+        /* Dark Mode */
+        .theme-dark {
+            --primary-color: var(--dark-primary-color);
+            --secondary-color: var(--dark-secondary-color);
+            --hover-color: var(--dark-hover-color);
+            --border-color: var(--dark-border-color);
+            --text-color: var(--dark-text-color);
+            --text-secondary-color: var(--dark-text-secondary-color);
+            --white-color: var(--dark-white-color);
+            --success-color: var(--dark-success-color);
+            --warning-color: var(--dark-warning-color);
+            --danger-color: var(--dark-danger-color);
+            --priority-low-color: var(--dark-priority-low-color);
+            --priority-medium-color: var(--dark-priority-medium-color);
+            --priority-high-color: var(--dark-priority-high-color);
+            --column-bg: var(--dark-column-bg);
+            --body-bg: var(--dark-body-bg);
+            --header-bg: var(--dark-header-bg);
+            --input-bg: var(--dark-input-bg);
+            --ai-primary: var(--dark-ai-primary);
+            --ai-accent: var(--dark-ai-accent);
+            --placeholder-bg: var(--dark-placeholder-bg);
+            --placeholder-border: var(--dark-placeholder-border);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--font-family); }
+        body { background-color: var(--body-bg); color: var(--text-color); font-size: 14px; line-height: 1.5; transition: background-color 0.3s ease, color 0.3s ease; }
+        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+
+        /* Header */
+        .header { background-color: var(--header-bg); color: var(--white-color); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; margin-bottom: 20px; box-shadow: var(--box-shadow); position: relative; }
+        .header__logo { font-size: 22px; font-weight: 700; }
+        .header__user-area { display: flex; align-items: center; gap: 16px; }
+        .header__user-name { font-weight: 500; }
+        .header__theme-toggle { background: none; border: none; color: var(--white-color); cursor: pointer; font-size: 20px; padding: 4px; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s ease; }
+        .header__theme-toggle:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tabs__tab { padding: 8px 16px; background-color: var(--secondary-color); border: 1px solid transparent; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; font-weight: 500; }
+        .tabs__tab--active { background-color: var(--hover-color); color: var(--primary-color); border-color: var(--primary-color); }
+        .tabs__tab:hover:not(.tabs__tab--active) { background-color: var(--hover-color); }
+
+        /* Search */
+        .search { display: flex; margin-bottom: 20px; position: relative; }
+        .search__input { flex-grow: 1; padding: 10px 16px 10px 40px; border: 1px solid var(--border-color); border-radius: 24px; font-size: 14px; transition: all 0.2s ease; background-color: var(--input-bg); color: var(--text-color); }
+        .search__input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(26, 98, 232, 0.2); }
+        .search__icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary-color); }
+
+        /* AI Controls */
+        .ai-controls { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+        .ai-model-selector { padding: 8px 12px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); cursor: pointer; min-width: 180px; font-size: 13px; }
+        .ai-model-selector:disabled { cursor: not-allowed; opacity: 0.6; }
+        .ai-btn { padding: 8px 16px; background-color: var(--ai-primary); color: white; border: none; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+        .ai-btn:hover { opacity: 0.9; }
+        .ai-btn:disabled { background-color: var(--secondary-color); color: var(--text-secondary-color); cursor: not-allowed; opacity: 0.7; }
+        .ai-btn--secondary { background-color: var(--secondary-color); color: var(--text-color); }
+        .ai-btn--secondary:hover { background-color: var(--hover-color); }
+
+        /* Board */
+        .board { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+
+        /* Column */
+        .column { background-color: var(--column-bg); border-radius: var(--border-radius-md); box-shadow: var(--box-shadow); display: flex; flex-direction: column; overflow: hidden; transition: transform 0.2s ease; }
+        .column:hover { transform: translateY(-2px); }
+        .column__header { padding: 12px 16px; background-color: var(--secondary-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .column__title-area { display: flex; align-items: center; gap: 8px; flex-grow: 1; margin-right: 8px; min-width: 0; /* Prevent overflow */ }
+        .column__title { cursor: pointer; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .column__title-input { font-weight: 600; padding: 2px 4px; border: 1px solid var(--primary-color); border-radius: var(--border-radius-sm); width: 100%; background-color: var(--input-bg); color: var(--text-color); font-size: 14px; line-height: 1.5; }
+        .column__counter { font-size: 12px; background-color: var(--primary-color); color: white; padding: 2px 6px; border-radius: 10px; margin-left: 4px; flex-shrink: 0; }
+        .column__actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+        /* Column Content */
+        .column__content { padding: 16px; flex-grow: 1; min-height: 200px; max-height: 65vh; overflow-y: auto; background-color: var(--column-bg); transition: background-color 0.2s ease; position: relative; /* For placeholder positioning */ }
+        .column__content--drag-over { background-color: var(--hover-color); } /* Remove outline for placeholder */
+
+        /* Task Placeholder */
+        .task--placeholder {
+            background-color: var(--placeholder-bg);
+            border: 1px dashed var(--placeholder-border);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 10px;
+            height: 50px; /* Adjust height as needed */
+            transition: height 0.1s ease;
+        }
+
+        .column__quick-add { padding: 0 16px 16px; display: none; }
+        .column__quick-add--visible { display: block; }
+        .column__quick-add-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 14px; background-color: var(--input-bg); color: var(--text-color); }
+        .column__quick-add-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(26, 98, 232, 0.2); }
+
+        /* Action Button */
+        .action-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary-color); padding: 4px; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s ease; }
+        .action-btn:hover { background-color: var(--hover-color); color: var(--primary-color); }
+        .action-btn--edit { font-size: 14px; }
+        .action-btn--add { font-size: 20px; font-weight: bold; }
+        .action-btn--menu { font-size: 18px; font-weight: bold; }
+
+        /* Task */
+        .task { background-color: var(--column-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom: 10px; cursor: grab; transition: all 0.2s ease, opacity 0s; /* opacity transition off for dragging */ position: relative; display: flex; align-items: flex-start; gap: 8px; border-left: 4px solid transparent; }
+        .task--dragging { opacity: 0.5; cursor: grabbing; background-color: var(--hover-color); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); z-index: 10; }
+        .task:hover { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); border-color: var(--border-color); }
+        .task--priority-low { border-left-color: var(--priority-low-color); }
+        .task--priority-medium { border-left-color: var(--priority-medium-color); }
+        .task--priority-high { border-left-color: var(--priority-high-color); }
+        .task__checkbox { margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: var(--primary-color); }
+        .task__content { flex-grow: 1; overflow: hidden; }
+        .task__title { font-weight: 500; margin-bottom: 4px; cursor: pointer; word-break: break-word; }
+        .task__title--completed { text-decoration: line-through; color: var(--text-secondary-color); font-weight: 400; }
+        .task__meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary-color); gap: 8px; flex-wrap: wrap; }
+        .task__meta-item { white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+        .task__due-date--overdue { color: var(--danger-color); font-weight: 500; }
+        .task__due-date--today { color: var(--success-color); font-weight: 500; }
+        .task__due-date--tomorrow { color: var(--priority-low-color); font-weight: 500; }
+        .task__tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .task__tag { font-size: 10px; padding: 2px 6px; border-radius: 10px; background-color: var(--secondary-color); color: var(--text-secondary-color); }
+        .task__delete-btn { position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; color: var(--text-secondary-color); padding: 2px; border-radius: var(--border-radius-sm); transition: all 0.2s ease; }
+        .task__delete-btn:hover { color: var(--danger-color); background-color: var(--hover-color); }
+
+        /* Modal */
+        .modal { display: none; /* Start hidden */ position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.6); justify-content: center; align-items: center; z-index: 1000; padding: 20px; opacity: 0; transition: opacity 0.3s ease; /* Only opacity transition */ }
+        .modal.visible { display: flex; /* Show when visible class added */ }
+        .modal--visible { opacity: 1; } /* Trigger opacity transition */
+        .modal__content { background-color: var(--column-bg); padding: 24px; border-radius: var(--border-radius-md); width: 100%; max-width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal--visible .modal__content { transform: scale(1); }
+        .modal__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .modal__title { font-size: 18px; font-weight: 600; }
+        .modal__close { background: none; border: none; font-size: 24px; font-weight: bold; line-height: 1; cursor: pointer; color: var(--text-secondary-color); padding: 4px; transition: color 0.2s ease; }
+        .modal__close:hover { color: var(--text-color); }
+
+        /* AI Interface */
+        .ai-interface { position: fixed; bottom: -100%; /* Start fully hidden */ left: 0; right: 0; background: rgba(10, 10, 30, 0.95); border-top: 1px solid var(--ai-primary); padding: 1.5rem; transition: bottom 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 100; max-width: 800px; margin: 0 auto; border-radius: 12px 12px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); color: var(--dark-text-color); /* AI interface always dark? */ }
+        .ai-interface.active { bottom: 0; }
+        .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .ai-title { font-weight: 600; color: var(--ai-accent); }
+        .ai-close-btn { background: none; border: none; font-size: 20px; color: var(--text-secondary-color); cursor: pointer; padding: 5px; line-height: 1; }
+        .ai-close-btn:hover { color: var(--ai-accent); }
+        .ai-input-container { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        #aiPrompt { flex: 1; background: transparent; border: 1px solid rgba(110, 0, 255, 0.5); border-radius: 20px; padding: 0.8rem 1rem; color: white; outline: none; font-size: 14px; }
+        #aiPrompt::placeholder { color: rgba(255,255,255,0.4); }
+        #executeAI { background: var(--ai-primary); border: none; border-radius: 20px; padding: 0 1.5rem; color: white; cursor: pointer; transition: all 0.2s ease; font-size: 14px; }
+        #executeAI:hover:not(:disabled) { background: #5a00cc; }
+        #executeAI:disabled { background: #555; cursor: not-allowed; }
+        .ai-suggestions { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .ai-suggestion { background: rgba(110, 0, 255, 0.2); border-radius: 20px; padding: 0.4rem 0.8rem; font-size: 0.8rem; white-space: nowrap; cursor: pointer; transition: all 0.2s ease; color: #eee; }
+        .ai-suggestion:hover { background: rgba(110, 0, 255, 0.4); }
+        .ai-response { max-height: 200px; overflow-y: auto; padding: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 1rem; font-size: 13px; line-height: 1.6; color: #eee; }
+        .ai-response div { margin-bottom: 0.5rem; }
+        .ai-thinking { color: var(--ai-accent); font-style: italic; }
+        .ai-error { color: var(--dark-danger-color); font-weight: bold; }
+        .ai-success { color: var(--dark-success-color); }
+        .ai-response-text { white-space: pre-wrap; } /* Preserve line breaks from AI */
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+        .form-group__label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; }
+        .form-group__input, .form-group__select, .form-group__textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 14px; transition: all 0.2s ease; background-color: var(--input-bg); color: var(--text-color); }
+        .form-group__input:focus, .form-group__select:focus, .form-group__textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(26, 98, 232, 0.2); }
+        .form-group__textarea { min-height: 80px; resize: vertical; }
+        .form-group__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .form-group__tag { display: inline-flex; align-items: center; font-size: 12px; padding: 4px 8px; background-color: var(--secondary-color); border-radius: var(--border-radius-sm); gap: 4px; color: var(--text-color); }
+        .form-group__tag-remove { background: none; border: none; cursor: pointer; color: var(--text-secondary-color); font-size: 12px; padding: 0; line-height: 1; }
+        .form-group__tag-remove:hover { color: var(--danger-color); }
+        .form-group__tag-input { flex-grow: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 14px; background-color: var(--input-bg); color: var(--text-color); }
+        .form-group__tag-input:focus { outline: none; border-color: var(--primary-color); }
+
+        /* Form Actions */
+        .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+
+        /* Button */
+        .btn { padding: 10px 16px; border-radius: var(--border-radius-sm); cursor: pointer; font-weight: 500; font-size: 14px; transition: all 0.2s ease; border: 1px solid transparent; line-height: 1.4; }
+        .btn--primary { background-color: var(--primary-color); color: var(--white-color); border-color: var(--primary-color); }
+        .btn--primary:hover { background-color: #185abc; border-color: #185abc; }
+        .btn--secondary { background-color: var(--column-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn--secondary:hover { background-color: var(--secondary-color); border-color: var(--border-color); }
+
+        /* Menu */
+        .menu { position: absolute; background-color: var(--column-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); z-index: 1001; padding: 4px 0; min-width: 180px; opacity: 0; transform: translateY(-10px) scale(0.95); transform-origin: top left; transition: opacity 0.2s ease, transform 0.2s ease; }
+        .menu--visible { opacity: 1; transform: translateY(0) scale(1); }
+        .menu__item { padding: 8px 16px; cursor: pointer; transition: background-color 0.2s ease; font-size: 14px; color: var(--text-color); white-space: nowrap; }
+        .menu__item:hover { background-color: var(--hover-color); }
+        .menu__separator { height: 1px; background-color: var(--border-color); margin: 4px 0; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 20px; color: var(--text-secondary-color); font-size: 14px; }
+
+        /* Responsive */
+        @media (max-width: 1200px) { .board { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+        @media (max-width: 768px) {
+            .board { grid-template-columns: 1fr; }
+            .header { padding: 12px 16px; border-radius: 0; }
+            .container { padding: 10px; }
+            .modal__content { max-width: 95%; }
+            .ai-interface { max-width: 100%; padding: 1rem; border-radius: 8px 8px 0 0; }
+            .ai-controls { gap: 8px; }
+            .ai-btn, .ai-model-selector { font-size: 12px; padding: 6px 10px; }
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header__logo">인폼 현황판 Enhanced</div>
+        <div class="header__user-area">
+            <div class="header__user-name">인폼</div>
+            <button class="header__theme-toggle" aria-label="테마 전환 (라이트/다크)">🌓</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tabs__tab tabs__tab--active">업무 대시보드</div>
+            <div class="tabs__tab">PGM Update history</div>
+            <div class="tabs__tab">통계</div>
+            <div class="tabs__tab">설정</div>
+        </div>
+
+        <div class="search">
+            <span class="search__icon">🔍</span>
+            <input type="text" id="searchInput" class="search__input" placeholder="업무 검색 (제목, 설명, 담당자, 태그)">
+        </div>
+
+        <div class="ai-controls">
+            <select id="aiModelSelector" class="ai-model-selector" aria-label="AI 모델 선택">
+                <option value="">AI 모델 로딩 중...</option>
+            </select>
+            <button id="toggleAI" class="ai-btn" aria-label="AI 도우미 열기/닫기">
+                <span>🤖</span> AI 도우미
+            </button>
+            <button id="aiOrganize" class="ai-btn ai-btn--secondary" aria-label="AI로 업무 정리 실행">
+                <span>🧠</span> AI로 업무 정리
+            </button>
+        </div>
+
+        <div class="board" id="board">
+            <!-- Columns will be populated dynamically -->
+        </div>
+
+        <!-- Add/Edit Task Modal -->
+        <div id="taskModal" class="modal" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+            <div class="modal__content">
+                <div class="modal__header">
+                    <div id="modalTitle" class="modal__title">새 업무 추가</div>
+                    <button class="modal__close" aria-label="모달 닫기" onclick="app.closeModal()">×</button>
+                </div>
+                <form id="taskForm">
+                    <input type="hidden" id="taskId" name="taskId">
+                    <input type="hidden" id="columnId" name="columnId">
+                    <div class="form-group">
+                        <label for="taskTitle" class="form-group__label">업무명 <span aria-hidden="true">*</span></label>
+                        <input type="text" id="taskTitle" name="taskTitle" class="form-group__input" required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription" class="form-group__label">설명</label>
+                        <textarea id="taskDescription" name="taskDescription" class="form-group__textarea"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDueDate" class="form-group__label">마감일</label>
+                        <input type="date" id="taskDueDate" name="taskDueDate" class="form-group__input">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskAssignees" class="form-group__label">담당자</label>
+                        <input type="text" id="taskAssignees" name="taskAssignees" class="form-group__input" placeholder="콤마(,)로 구분">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskPriority" class="form-group__label">중요도</label>
+                        <select id="taskPriority" name="taskPriority" class="form-group__select">
+                            <option value="low">낮음</option>
+                            <option value="medium" selected>보통</option>
+                            <option value="high">높음</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tagInput" class="form-group__label">태그</label>
+                        <div id="tagsContainer" class="form-group__tags" aria-live="polite"></div>
+                        <input type="text" id="tagInput" class="form-group__tag-input" placeholder="태그 입력 후 엔터">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn--secondary" onclick="app.closeModal()">취소</button>
+                        <button type="submit" class="btn btn--primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Detail Modal -->
+        <div id="taskDetailModal" class="modal" role="dialog" aria-labelledby="taskDetailTitle" aria-hidden="true">
+            <div class="modal__content">
+                <div class="modal__header">
+                    <div id="taskDetailTitle" class="modal__title">업무 상세</div>
+                    <button class="modal__close" aria-label="상세 정보 모달 닫기" onclick="app.closeDetailModal()">×</button>
+                </div>
+                <div id="taskDetailContent">
+                    <!-- Content will be populated by JS -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn--secondary" onclick="app.closeDetailModal()">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 인터페이스 -->
+    <div class="ai-interface" id="aiInterface" aria-hidden="true">
+        <div class="ai-header">
+            <div class="ai-title">AI 업무 도우미</div>
+            <button class="ai-close-btn" id="closeAI" aria-label="AI 인터페이스 닫기">✕</button>
+        </div>
+        <div class="ai-input-container">
+            <input type="text" id="aiPrompt" placeholder="업무 지시를 입력하세요 (예: '마감일 임박 작업 정렬')">
+            <button id="executeAI" aria-label="AI 명령어 실행">실행</button>
+        </div>
+        <div class="ai-suggestions">
+            <div class="ai-suggestion" data-prompt="오늘 마감인 작업은?">오늘 마감인인 작업</div>
+            <div class="ai-suggestion" data-prompt="마감되지 않은 작업들만 우선순위로 정렬해줘">우선 순위로 정렬 해줘</div>
+            <div class="ai-suggestion" data-prompt="완료된 작업 숨기기 또는 아카이브">완료 작업 정리</div>
+            <div class="ai-suggestion" data-prompt="'매일할일' 에 '책상 정리' 추가해줘">새 업무 추가 예시</div>
+            <div class="ai-suggestion" data-prompt="마감일 지난 업무 정리해줘">마감일 지난 업무</div>
+            <!--<div class="ai-suggestion" data-prompt="오늘 마감인 업무에 '긴급' 태그 추가">오늘 마감 태그 추가</div>-->
+        </div>
+        <div class="ai-response" id="aiResponse" aria-live="assertive"></div>
+    </div>
+
+    <script>
+        // --- Constants ---
+        const LOCAL_STORAGE_DATA_KEY = 'taskAppData_v2'; // Versioning for potential structure changes
+        const LOCAL_STORAGE_SETTINGS_KEY = 'taskAppSettings_v2';
+        const JAN_API_BASE_URL = "http://127.0.0.1:1337/v1";
+        const JAN_API_CHAT_ENDPOINT = "/chat/completions";
+        const JAN_API_MODELS_ENDPOINT = "/models";
+        const DEBOUNCE_DELAY = 300; // ms for search input debounce
+
+        // --- Utility Functions ---
+        const utils = {
+            generateId: () => `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            debounce: (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func.apply(this, args); // Use apply to maintain context
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+            formatDueDateForDisplay: (dueDateString) => {
+                if (!dueDateString) return '날짜 없음';
+                try {
+                    const date = new Date(dueDateString);
+                    date.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+
+                    const timeDiff = date.getTime() - today.getTime();
+                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Use Math.ceil
+
+                    if (dayDiff < 0) return '기한지남';
+                    if (dayDiff === 0) return '오늘';
+                    if (dayDiff === 1) return '내일';
+
+                    // More robust date formatting
+                    return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' });
+                } catch (e) {
+                    console.error("Error formatting date:", dueDateString, e);
+                    return '날짜 형식 오류';
+                }
+            },
+            getDueDateClass: (dueDateString) => {
+                if (!dueDateString) return '';
+                try {
+                    const date = new Date(dueDateString);
+                    date.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    const timeDiff = date.getTime() - today.getTime();
+                    const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Use Math.ceil
+
+                    if (dayDiff < 0) return 'task__due-date--overdue';
+                    if (dayDiff === 0) return 'task__due-date--today';
+                    if (dayDiff === 1) return 'task__due-date--tomorrow';
+                    return '';
+                } catch (e) {
+                    return '';
+                }
+            },
+            // Simple alert for feedback (replace with a Toast library later if needed)
+            showFeedback: (message, type = 'info') => {
+                // console[type](message); // Log to console as well
+                alert(`[${type.toUpperCase()}] ${message}`);
+            },
+            escapeHtml: (unsafe) => {
+                 return unsafe
+                     .replace(/&/g, "&amp;")
+                     .replace(/</g, "&lt;")
+                     .replace(/>/g, "&gt;")
+                     .replace(/"/g, "&quot;")
+                     .replace(/'/g, "&#039;");
+            }
+        };
+
+        const app = (function(utils) {
+            // --- State ---
+            let appData = {
+                tasks: [],
+                columns: [
+                    { id: 'daily', title: '매일 할일', order: 0 },
+                    { id: 'input', title: '인폼 사항', order: 1 },
+                    { id: 'instruction1', title: '지시 사항 1', order: 2 },
+                    { id: 'instruction2', title: '지시 사항 2', order: 3 },
+                    { id: 'pgm', title: 'PGM 변경 내역', order: 4 }
+                ],
+                settings: {
+                    darkMode: false,
+                    showQuickAdd: true
+                },
+                janAI: {
+                    connected: false,
+                    model: null,
+                    availableModels: []
+                }
+            };
+
+            let draggedTask = null;
+            let dragPlaceholder = null;
+            let currentMenu = null;
+            let currentTags = [];
+
+            // --- DOM Elements ---
+            const board = document.getElementById('board');
+            const taskModal = document.getElementById('taskModal');
+            const taskForm = document.getElementById('taskForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const searchInput = document.getElementById('searchInput');
+            const detailModal = document.getElementById('taskDetailModal');
+            const detailContent = document.getElementById('taskDetailContent');
+            const tagInput = document.getElementById('tagInput');
+            const tagsContainer = document.getElementById('tagsContainer');
+            const themeToggle = document.querySelector('.header__theme-toggle');
+            const aiModelSelector = document.getElementById('aiModelSelector');
+            const toggleAI = document.getElementById('toggleAI');
+            const aiOrganize = document.getElementById('aiOrganize');
+            const aiInterface = document.getElementById('aiInterface');
+            const aiPrompt = document.getElementById('aiPrompt');
+            const executeAI = document.getElementById('executeAI');
+            const closeAI = document.getElementById('closeAI');
+            const aiResponse = document.getElementById('aiResponse');
+            const aiSuggestions = document.querySelector('.ai-suggestions');
+
+            // --- Jan API Class ---
+            class JanAI {
+                constructor() {
+                    this.baseUrl = JAN_API_BASE_URL;
+                    this.chatEndpoint = JAN_API_CHAT_ENDPOINT;
+                    this.modelsEndpoint = JAN_API_MODELS_ENDPOINT;
+                }
+
+// JanAI 클래스 내 checkConnection 함수 수정
+
+async checkConnection() {
+    // ... (기존 코드: fetch 요청 전까지)
+    try {
+        const response = await fetch(`${this.baseUrl}${this.modelsEndpoint}`); // 필요하다면 여기에 파라미터 추가 (가능성 3 참고)
+        if (!response.ok) throw new Error(`API 연결 실패 (${response.status})`);
+
+        const data = await response.json();
+        const allModels = data.data || [];
+
+        // --- 여기가 중요: 로컬/다운로드된 모델만 필터링 ---
+        // 예시: 만약 모델 객체에 'status' 속성이 있고, 준비된 상태가 'downloaded' 인 모델만 리스트업 해서 띄움
+        // 확인 방법 개발자 도구>네트워크>response> 로컬 모델과 아닌모델 비교시 downloaded와 downloadable의 차이점이 있었음음
+        const localModels = allModels.filter(model => model.status === 'downloaded' /* 또는 model.downloaded === true 등 */);
+        // 또는 ID 형식을 보고 필터링해야 할 수도 있습니다. (예: model.id.startsWith('local-') )
+
+        // appData 업데이트 및 모델 선택기 채우기는 필터링된 목록(localModels)으로 수행
+        appData.janAI.connected = true;
+        appData.janAI.availableModels = localModels; // 필터링된 목록 저장
+
+        if (localModels.length > 0) {
+            appData.janAI.model = localModels[0].id; // 기본 선택도 필터링된 목록에서
+            this.updateModelSelector(localModels);   // 선택기 업데이트도 필터링된 목록으로
+            aiModelSelector.disabled = false;
+            toggleAI.disabled = false;
+            aiOrganize.disabled = false;
+            console.info("Jan.ai 연결 성공 (로컬 모델 필터링됨):", localModels.map(m => m.id).join(', '));
+        } else {
+            // 필터링 후 모델이 하나도 없다면
+            throw new Error("사용 가능한 로컬 AI 모델이 없습니다.");
+        }
+        return { connected: true, models: localModels }; // 반환값도 필터링된 목록으로
+
+    } catch (error) {
+        // ... (기존 에러 처리 코드)
+        console.error("Jan.ai 연결 또는 모델 필터링 오류:", error);
+        // ...
+    }
+}
+
+                updateModelSelector(models) {
+                    aiModelSelector.innerHTML = ''; // Clear existing options
+                    if (models.length === 0) {
+                        aiModelSelector.innerHTML = '<option value="">사용 가능한 모델 없음</option>';
+                        aiModelSelector.disabled = true;
+                        return;
+                    }
+
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        option.textContent = model.id.length > 30 ? model.id.substring(0, 27) + '...' : model.id; // Shorten long names
+                        option.title = model.id; // Full name on hover
+                        aiModelSelector.appendChild(option);
+                    });
+
+                    aiModelSelector.value = appData.janAI.model || models[0].id;
+                    aiModelSelector.disabled = false;
+                }
+
+                async sendPrompt(prompt, systemMessage = null) {
+                    if (!appData.janAI.connected || !appData.janAI.model) {
+                        throw new Error("Jan에 연결되지 않았거나 모델이 선택되지 않았습니다.");
+                    }
+
+                    setAIProcessing(true); // Disable button, show loading
+
+                    const messages = [];
+                    if (systemMessage) {
+                        messages.push({ role: "system", content: systemMessage });
+                    }
+                    messages.push({ role: "user", content: prompt });
+
+                    try {
+                        const response = await fetch(`${this.baseUrl}${this.chatEndpoint}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                model: appData.janAI.model,
+                                messages: messages,
+                                temperature: 0.7, // Consider making configurable
+                                max_tokens: 1500 // Adjust as needed
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorBody = await response.text();
+                            throw new Error(`API 요청 실패 (${response.status}): ${errorBody}`);
+                        }
+
+                        return await response.json();
+                    } finally {
+                        setAIProcessing(false); // Re-enable button
+                    }
+                }
+            }
+            const janAI = new JanAI();
+
+            // --- Data Management ---
+            const loadData = () => {
+                // Load app data
+                try {
+                    const storedData = localStorage.getItem(LOCAL_STORAGE_DATA_KEY);
+                    if (storedData) {
+                        const parsedData = JSON.parse(storedData);
+                        appData.tasks = Array.isArray(parsedData.tasks) ? parsedData.tasks : [];
+                        appData.columns = Array.isArray(parsedData.columns) ? parsedData.columns : appData.columns; // Keep default if invalid
+                        console.info("데이터 로드 완료.");
+                    }
+                } catch (e) {
+                    console.error("저장된 데이터 파싱 오류:", e);
+                    utils.showFeedback("저장된 데이터를 불러오는 중 오류가 발생했습니다. 기본값으로 시작합니다.", 'error');
+                    // Optionally clear corrupted data: localStorage.removeItem(LOCAL_STORAGE_DATA_KEY);
+                }
+
+                // Load settings
+                try {
+                    const storedSettings = localStorage.getItem(LOCAL_STORAGE_SETTINGS_KEY);
+                    if (storedSettings) {
+                        const parsedSettings = JSON.parse(storedSettings);
+                        // Merge carefully, keeping defaults for missing keys
+                        appData.settings = { ...appData.settings, ...parsedSettings };
+                        console.info("설정 로드 완료.");
+                    }
+                } catch (e) {
+                    console.error("저장된 설정 파싱 오류:", e);
+                     // Settings are less critical, proceed with defaults
+                } finally {
+                    // Apply settings regardless of loading success
+                    applyTheme();
+                    applyQuickAddVisibility(); // If needed later
+                }
+            };
+
+            const saveData = () => {
+                try {
+                    localStorage.setItem(LOCAL_STORAGE_DATA_KEY, JSON.stringify({
+                        tasks: appData.tasks,
+                        columns: appData.columns
+                    }));
+                } catch (e) {
+                    console.error("데이터 저장 오류:", e);
+                    utils.showFeedback("데이터 저장 중 오류가 발생했습니다.", 'error');
+                }
+            };
+
+            const saveSettings = () => {
+                try {
+                    localStorage.setItem(LOCAL_STORAGE_SETTINGS_KEY, JSON.stringify(appData.settings));
+                } catch (e) {
+                    console.error("설정 저장 오류:", e);
+                    // Less critical, maybe just log
+                }
+            };
+
+            // --- Theme & Settings Application ---
+            const applyTheme = () => {
+                document.body.classList.toggle('theme-dark', appData.settings.darkMode);
+                themeToggle.textContent = appData.settings.darkMode ? '☀️' : '🌙';
+                themeToggle.setAttribute('aria-label', appData.settings.darkMode ? '라이트 모드 전환' : '다크 모드 전환');
+            }
+
+            const toggleDarkMode = () => {
+                appData.settings.darkMode = !appData.settings.darkMode;
+                applyTheme();
+                saveSettings();
+            };
+
+            const applyQuickAddVisibility = () => {
+                // TODO: If quick add toggle is implemented, update visibility here
+                const quickAddElements = board.querySelectorAll('.column__quick-add');
+                 quickAddElements.forEach(el => {
+                     el.style.display = appData.settings.showQuickAdd ? 'block' : 'none';
+                 });
+            };
+
+            // --- Rendering ---
+            const getTaskDataById = (id) => appData.tasks.find(task => task.id === id);
+            const getColumnElementById = (id) => board.querySelector(`.column[data-column-id="${id}"]`);
+            const getColumnContentElement = (id) => board.querySelector(`.column__content[data-column-id="${id}"]`);
+            const getColumnTitleElement = (columnId) => getColumnElementById(columnId)?.querySelector('.column__title');
+
+            const createTaskElement = (task) => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task task--priority-${task.priority || 'medium'}`;
+                taskEl.setAttribute('draggable', true);
+                taskEl.dataset.taskId = task.id;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'task__checkbox';
+                checkbox.checked = task.completed;
+                checkbox.dataset.action = 'toggleComplete';
+                checkbox.setAttribute('aria-label', `업무 ${task.completed ? '미완료로' : '완료로'} 표시: ${task.title}`);
+                taskEl.appendChild(checkbox);
+
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'task__content';
+
+                const titleEl = document.createElement('div');
+                titleEl.className = `task__title ${task.completed ? 'task__title--completed' : ''}`;
+                titleEl.textContent = task.title;
+                titleEl.dataset.action = 'openDetail'; // Changed from openEdit to openDetail by default
+                contentDiv.appendChild(titleEl);
+
+                const metaEl = document.createElement('div');
+                metaEl.className = 'task__meta';
+
+                const dueDateEl = document.createElement('div');
+                dueDateEl.className = `task__meta-item ${utils.getDueDateClass(task.dueDate)}`;
+                dueDateEl.innerHTML = `<span>🗓️</span> ${utils.formatDueDateForDisplay(task.dueDate)}`;
+                metaEl.appendChild(dueDateEl);
+
+                if (task.assignees) {
+                    const assigneesEl = document.createElement('div');
+                    assigneesEl.className = 'task__meta-item';
+                    assigneesEl.innerHTML = `<span>👤</span> ${utils.escapeHtml(task.assignees)}`;
+                    metaEl.appendChild(assigneesEl);
+                }
+                contentDiv.appendChild(metaEl);
+
+                if (task.tags && task.tags.length > 0) {
+                    const tagsEl = document.createElement('div');
+                    tagsEl.className = 'task__tags';
+                    task.tags.forEach(tag => {
+                        const tagEl = document.createElement('span');
+                        tagEl.className = 'task__tag';
+                        tagEl.textContent = utils.escapeHtml(tag);
+                        tagsEl.appendChild(tagEl);
+                    });
+                    contentDiv.appendChild(tagsEl);
+                }
+                taskEl.appendChild(contentDiv);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'task__delete-btn';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.dataset.action = 'deleteTask';
+                deleteBtn.setAttribute('aria-label', `업무 삭제: ${task.title}`);
+                taskEl.appendChild(deleteBtn);
+
+                taskEl.addEventListener('dragstart', handleDragStart);
+                taskEl.addEventListener('dragend', handleDragEnd);
+                taskEl.addEventListener('dblclick', () => openTaskModal('edit', null, task.id)); // Double click to edit
+
+                return taskEl;
+            };
+
+            const renderBoard = () => {
+                board.innerHTML = ''; // Clear board
+                const sortedColumns = [...appData.columns].sort((a, b) => a.order - b.order);
+
+                sortedColumns.forEach(column => {
+                    const columnEl = document.createElement('div');
+                    columnEl.className = 'column';
+                    columnEl.dataset.columnId = column.id;
+
+                    // --- Header ---
+                    const headerEl = document.createElement('div');
+                    headerEl.className = 'column__header';
+
+                    const titleAreaEl = document.createElement('div');
+                    titleAreaEl.className = 'column__title-area';
+
+                    const titleEl = document.createElement('span');
+                    titleEl.className = 'column__title';
+                    titleEl.textContent = column.title;
+                    titleEl.title = "더블클릭하여 이름 수정"; // Tooltip
+                    titleEl.addEventListener('dblclick', () => startEditingColumnTitle(titleAreaEl)); // Double click to edit title
+
+                    const counterEl = document.createElement('span');
+                    counterEl.className = 'column__counter';
+                    counterEl.setAttribute('aria-live', 'polite'); // Announce changes
+
+                    titleAreaEl.appendChild(titleEl);
+                    titleAreaEl.appendChild(counterEl);
+
+                    // No separate edit button needed if using double-click
+                    // const editBtn = document.createElement('button'); ...
+
+                    headerEl.appendChild(titleAreaEl);
+
+                    const actionsEl = document.createElement('div');
+                    actionsEl.className = 'column__actions';
+
+                    const addBtn = document.createElement('button');
+                    addBtn.className = 'action-btn action-btn--add';
+                    addBtn.dataset.action = 'addTask';
+                    addBtn.dataset.columnTarget = column.id;
+                    addBtn.setAttribute('aria-label', `${column.title} 컬럼에 새 업무 추가`);
+                    addBtn.textContent = '+';
+                    actionsEl.appendChild(addBtn);
+
+                    const menuBtn = document.createElement('button');
+                    menuBtn.className = 'action-btn action-btn--menu';
+                    menuBtn.dataset.action = 'openColumnMenu';
+                    menuBtn.dataset.columnTarget = column.id;
+                    menuBtn.setAttribute('aria-label', `${column.title} 컬럼 메뉴 열기`);
+                    menuBtn.textContent = '⋮';
+                    actionsEl.appendChild(menuBtn);
+
+                    headerEl.appendChild(actionsEl);
+                    columnEl.appendChild(headerEl);
+
+                    // --- Content ---
+                    const contentEl = document.createElement('div');
+                    contentEl.className = 'column__content';
+                    contentEl.dataset.columnId = column.id;
+                    contentEl.addEventListener('dragover', handleDragOver);
+                    contentEl.addEventListener('dragleave', handleDragLeave);
+                    contentEl.addEventListener('drop', handleDrop);
+
+                    const columnTasks = appData.tasks
+                        .filter(task => task.columnId === column.id)
+                        .sort((a, b) => (new Date(a.dueDate || '9999-12-31')) - (new Date(b.dueDate || '9999-12-31'))); // Sort by due date
+
+                    if (columnTasks.length === 0) {
+                        contentEl.appendChild(createEmptyState());
+                    } else {
+                        columnTasks.forEach(task => contentEl.appendChild(createTaskElement(task)));
+                    }
+                    columnEl.appendChild(contentEl);
+
+                    // Update counter after tasks are added
+                    counterEl.textContent = columnTasks.length;
+
+                    // --- Quick Add ---
+                    if (appData.settings.showQuickAdd) {
+                        const quickAddEl = document.createElement('div');
+                        quickAddEl.className = 'column__quick-add';
+                        quickAddEl.style.display = appData.settings.showQuickAdd ? 'block' : 'none'; // Direct style for now
+
+                        const inputEl = document.createElement('input');
+                        inputEl.className = 'column__quick-add-input';
+                        inputEl.placeholder = '빠른 추가 (Enter)';
+                        inputEl.dataset.columnId = column.id;
+                        inputEl.setAttribute('aria-label', `${column.title}에 빠른 업무 추가`);
+
+                        inputEl.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' && e.target.value.trim()) {
+                                const newTitle = e.target.value.trim();
+                                addTask({
+                                    columnId: column.id,
+                                    title: newTitle,
+                                });
+                                e.target.value = '';
+                                utils.showFeedback(`'${newTitle}' 업무 추가됨`);
+                            }
+                        });
+                        quickAddEl.appendChild(inputEl);
+                        columnEl.appendChild(quickAddEl);
+                    }
+
+                    board.appendChild(columnEl);
+                });
+
+                // Re-apply search filter if needed
+                const currentSearchTerm = searchInput.value.trim();
+                if (currentSearchTerm) {
+                    filterTasks(currentSearchTerm);
+                }
+            };
+
+            const createEmptyState = () => {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.textContent = '업무가 없습니다';
+                return emptyState;
+            };
+
+            const updateColumnCounter = (columnId) => {
+                const column = getColumnElementById(columnId);
+                if (column) {
+                    const counter = column.querySelector('.column__counter');
+                    const content = column.querySelector('.column__content');
+                    const taskCount = content ? content.querySelectorAll('.task').length : 0;
+                    if (counter) counter.textContent = taskCount;
+
+                    // Toggle empty state
+                    const emptyState = content.querySelector('.empty-state');
+                    if (taskCount === 0 && !emptyState) {
+                        content.appendChild(createEmptyState());
+                    } else if (taskCount > 0 && emptyState) {
+                        emptyState.remove();
+                    }
+                }
+            };
+
+            // --- Task Management ---
+            const addTask = (taskData) => {
+                const newTask = {
+                    id: utils.generateId(),
+                    completed: false,
+                    priority: 'medium',
+                    tags: [...currentTags], // Add tags from modal state if any
+                    ...taskData // Overwrite with provided data
+                };
+                currentTags = []; // Reset modal tags
+
+                appData.tasks.push(newTask);
+                saveData();
+
+                const columnContent = getColumnContentElement(newTask.columnId);
+                if (columnContent) {
+                    columnContent.appendChild(createTaskElement(newTask));
+                    updateColumnCounter(newTask.columnId);
+                }
+                // utils.showFeedback(`'${newTask.title}' 업무 추가됨.`); // Feedback handled in quick add or form submit
+            };
+
+            const updateTask = (taskId, updatedData) => {
+                const taskIndex = appData.tasks.findIndex(task => task.id === taskId);
+                if (taskIndex > -1) {
+                    // Ensure tags are handled correctly (use currentTags from modal if editing)
+                    updatedData.tags = [...currentTags];
+                    currentTags = [];
+
+                    const originalColumnId = appData.tasks[taskIndex].columnId;
+                    appData.tasks[taskIndex] = { ...appData.tasks[taskIndex], ...updatedData };
+                    saveData();
+
+                    // Re-render the specific task
+                    const taskEl = board.querySelector(`.task[data-task-id="${taskId}"]`);
+                    if (taskEl) {
+                        const newTaskEl = createTaskElement(appData.tasks[taskIndex]);
+                        taskEl.replaceWith(newTaskEl);
+                    }
+
+                    // Update counters if column changed (though less likely via edit modal)
+                    if (originalColumnId !== updatedData.columnId) {
+                        updateColumnCounter(originalColumnId);
+                        updateColumnCounter(updatedData.columnId);
+                    } else {
+                        updateColumnCounter(originalColumnId); // Update original column counter
+                    }
+                    utils.showFeedback(`'${updatedData.title}' 업무 수정됨.`);
+                } else {
+                     console.error("수정할 업무를 찾을 수 없음:", taskId);
+                     utils.showFeedback("업무 수정 중 오류 발생", 'error');
+                }
+            };
+
+            const deleteTask = (taskId) => {
+                const taskIndex = appData.tasks.findIndex(task => task.id === taskId);
+                if (taskIndex > -1) {
+                    const deletedTask = appData.tasks[taskIndex];
+                    const columnId = deletedTask.columnId;
+                    appData.tasks.splice(taskIndex, 1);
+                    saveData();
+
+                    const taskEl = board.querySelector(`.task[data-task-id="${taskId}"]`);
+                    if (taskEl) {
+                        taskEl.remove();
+                        updateColumnCounter(columnId);
+                        utils.showFeedback(`'${deletedTask.title}' 업무 삭제됨.`);
+                    }
+                }
+            };
+
+            const toggleComplete = (taskId) => {
+                const taskIndex = appData.tasks.findIndex(task => task.id === taskId);
+                if (taskIndex > -1) {
+                    const task = appData.tasks[taskIndex];
+                    task.completed = !task.completed;
+                    saveData();
+
+                    const taskEl = board.querySelector(`.task[data-task-id="${taskId}"]`);
+                    if (taskEl) {
+                        const titleEl = taskEl.querySelector('.task__title');
+                        const checkbox = taskEl.querySelector('.task__checkbox');
+                        checkbox.checked = task.completed;
+                        checkbox.setAttribute('aria-label', `업무 ${task.completed ? '미완료로' : '완료로'} 표시: ${task.title}`);
+                        titleEl.classList.toggle('task__title--completed', task.completed);
+                        // No full re-render needed
+                    }
+                }
+            };
+
+            const moveTask = (taskId, targetColumnId, insertBeforeTaskId = null) => {
+                const taskIndex = appData.tasks.findIndex(t => t.id === taskId);
+                if (taskIndex === -1) return;
+
+                const movedTask = appData.tasks.splice(taskIndex, 1)[0];
+                const originalColumnId = movedTask.columnId;
+                movedTask.columnId = targetColumnId;
+
+                // Find the correct index to insert in the main tasks array based on the visual order
+                const tasksInTargetColumn = appData.tasks.filter(t => t.columnId === targetColumnId);
+                let targetIndex = -1;
+
+                if (insertBeforeTaskId) {
+                    const insertBeforeIndex = tasksInTargetColumn.findIndex(t => t.id === insertBeforeTaskId);
+                    if (insertBeforeIndex !== -1) {
+                         // Find the index in the *main* tasks array corresponding to the visual insertion point
+                        const actualInsertBeforeTask = tasksInTargetColumn[insertBeforeIndex];
+                        targetIndex = appData.tasks.findIndex(t => t.id === actualInsertBeforeTask.id);
+                    }
+                }
+
+                if (targetIndex !== -1) {
+                    appData.tasks.splice(targetIndex, 0, movedTask);
+                } else {
+                    // If no specific position or insertBefore task not found, append to end of all tasks (will be sorted on render)
+                    // Or, better: find the last task of the target column and insert after it
+                    let lastTaskOfColumnIndex = -1;
+                    for (let i = appData.tasks.length - 1; i >= 0; i--) {
+                        if (appData.tasks[i].columnId === targetColumnId) {
+                            lastTaskOfColumnIndex = i;
+                            break;
+                        }
+                    }
+                    if (lastTaskOfColumnIndex !== -1) {
+                         appData.tasks.splice(lastTaskOfColumnIndex + 1, 0, movedTask);
+                    } else {
+                         appData.tasks.push(movedTask); // If column was empty
+                    }
+                }
+
+
+                saveData();
+                renderBoard(); // Re-render the entire board after move for simplicity, sorting needs full context
+                // More optimized: move the DOM element directly and update counters
+                // const taskEl = board.querySelector(`.task[data-task-id="${taskId}"]`);
+                // const targetContent = getColumnContentElement(targetColumnId);
+                // const insertBeforeEl = insertBeforeTaskId ? board.querySelector(`.task[data-task-id="${insertBeforeTaskId}"]`) : null;
+                // if (taskEl && targetContent) {
+                //     targetContent.insertBefore(taskEl, insertBeforeEl);
+                //     updateColumnCounter(originalColumnId);
+                //     updateColumnCounter(targetColumnId);
+                // }
+            };
+
+            // --- Column Management ---
+            const startEditingColumnTitle = (titleContainer) => {
+                const titleSpan = titleContainer.querySelector('.column__title');
+                // Prevent editing if already editing
+                if (titleContainer.querySelector('.column__title-input')) return;
+
+                const currentTitle = titleSpan.textContent;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentTitle;
+                input.className = 'column__title-input';
+                input.setAttribute('aria-label', '컬럼 이름 수정');
+
+                titleSpan.style.display = 'none'; // Hide span
+                titleContainer.insertBefore(input, titleSpan.nextSibling); // Insert input after span
+                input.focus();
+                input.select();
+
+                const finishEditing = (save = true) => {
+                    const columnId = titleContainer.closest('.column').dataset.columnId;
+                    const newTitle = save ? input.value.trim() : currentTitle;
+
+                    input.remove(); // Remove input first
+                    titleSpan.style.display = ''; // Show span again
+
+                    if (save && newTitle && newTitle !== currentTitle) {
+                        updateColumnTitle(columnId, newTitle);
+                         // Update aria-labels for buttons
+                        const columnElement = getColumnElementById(columnId);
+                        columnElement.querySelector('.action-btn--add')?.setAttribute('aria-label', `${newTitle} 컬럼에 새 업무 추가`);
+                        columnElement.querySelector('.action-btn--menu')?.setAttribute('aria-label', `${newTitle} 컬럼 메뉴 열기`);
+                    } else {
+                         titleSpan.textContent = currentTitle; // Restore original if not saved or empty
+                    }
+                    // Remove listeners attached to the input
+                };
+
+                const handleBlur = () => finishEditing();
+                const handleInputKeydown = (e) => {
+                    if (e.key === 'Enter') finishEditing();
+                    else if (e.key === 'Escape') finishEditing(false);
+                };
+
+                input.addEventListener('blur', handleBlur, { once: true }); // Use once to auto-remove
+                input.addEventListener('keydown', handleInputKeydown);
+            };
+
+            const updateColumnTitle = (columnId, newTitle) => {
+                const column = appData.columns.find(c => c.id === columnId);
+                if (column && newTitle) {
+                    column.title = newTitle;
+                    saveData();
+                    const titleEl = getColumnTitleElement(columnId);
+                    if (titleEl) titleEl.textContent = newTitle;
+                }
+            };
+
+            const deleteCompletedTasks = (columnId) => {
+                const columnTitle = getColumnTitleElement(columnId)?.textContent || `컬럼 ${columnId}`;
+                const completedTasks = appData.tasks.filter(task => task.columnId === columnId && task.completed);
+
+                if (completedTasks.length === 0) {
+                    utils.showFeedback(`${columnTitle}에 완료된 항목이 없습니다.`);
+                    return;
+                }
+
+                if (confirm(`${columnTitle}의 완료된 항목 ${completedTasks.length}개를 삭제하시겠습니까?`)) {
+                    const initialLength = appData.tasks.length;
+                    appData.tasks = appData.tasks.filter(task => !(task.columnId === columnId && task.completed));
+                    if (appData.tasks.length < initialLength) {
+                        saveData();
+                        renderBoard(); // Re-render needed
+                        utils.showFeedback(`${columnTitle}에서 ${completedTasks.length}개의 완료된 항목을 삭제했습니다.`);
+                    }
+                }
+            };
+
+            const deleteAllTasksFromColumn = (columnId) => {
+                const columnTitle = getColumnTitleElement(columnId)?.textContent || `컬럼 ${columnId}`;
+                const tasksInColumn = appData.tasks.filter(task => task.columnId === columnId).length;
+
+                if (tasksInColumn === 0) {
+                    utils.showFeedback(`${columnTitle}에 삭제할 항목이 없습니다.`);
+                    return;
+                }
+
+                if (confirm(`${columnTitle}의 모든 항목(${tasksInColumn}개)을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!`)) {
+                    appData.tasks = appData.tasks.filter(task => task.columnId !== columnId);
+                    saveData();
+                    renderBoard(); // Re-render needed
+                    utils.showFeedback(`${columnTitle}의 모든 항목 ${tasksInColumn}개를 삭제했습니다.`);
+                }
+            };
+
+              // processAICommand 함수 내 수정
+                // AI 처리 중 UI 상태 관리
+                const setAIProcessing = (isProcessing) => {
+                    executeAI.disabled = isProcessing;
+                    executeAI.textContent = isProcessing ? '처리중...' : '실행';
+                    aiPrompt.disabled = isProcessing;
+                    
+                    // 처리 중일 때 시각적 표시 추가
+                    if (isProcessing) {
+                        aiResponse.innerHTML = "<div class='ai-thinking'>🤔 생각 중입니다...</div>";
+                    }
+                };
+
+                // AI 명령어 처리 - 개선된 프롬프트 엔지니어링
+                const processAICommand = async (prompt) => {
+                    if (!prompt || prompt.trim() === "") {
+                        aiResponse.innerHTML = "<div class='ai-error'>명령어를 입력해주세요.</div>";
+                        return;
+                    }
+                    
+                    setAIProcessing(true);
+                    
+                    try {
+                        // 사용자 명령어 분석 및 의도 파악
+                        const commandType = await analyzeCommandIntent(prompt);
+                        
+                        // 명령어 유형에 따라 적절한 처리 수행
+                        switch(commandType.type) {
+                            case 'search':
+                                await handleSearchCommand(prompt, commandType.keywords);
+                                break;
+                            case 'add':
+                                await handleAddCommand(prompt, commandType.details);
+                                break;
+                            case 'update':
+                                await handleUpdateCommand(prompt, commandType.taskInfo);
+                                break;
+                            case 'delete':
+                                await handleDeleteCommand(prompt, commandType.taskInfo);
+                                break;
+                            case 'move':
+                                await handleMoveCommand(prompt, commandType.taskInfo);
+                                break;
+                            case 'organize':
+                                await handleOrganizeCommand(prompt);
+                                break;
+                                break;
+                            case 'date':
+                                await handleDateCommand(prompt, commandType.dateInfo);
+                                break;
+                            case 'unknown':
+                                default:
+                                await handleGenericCommand(prompt);    
+                        }
+                    } catch (error) {
+                        console.error("AI 명령어 처리 중 오류:", error);
+                        const errorMessage = error.message || "AI 처리 중 알 수 없는 오류 발생";
+                        aiResponse.innerHTML = `<div class='ai-error'>⚠️ ${utils.escapeHtml(errorMessage)}</div>`;
+                    } finally {
+                        setAIProcessing(false);
+                    }
+                };
+
+                // 명령어 의도 분석 - 작은 모델에서도 잘 작동하는 간결한 프롬프트
+                const analyzeCommandIntent = async (prompt) => {
+                    const systemMessage = `
+                    당신은 업무 관리 앱에 통합된 AI 비서입니다. 사용자의 입력을 분석하여 무엇을 하려는지 의도를 파악해주세요.
+                    가능한 의도 유형: search(검색/찾기), add(추가/생성), update(수정/변경), delete(삭제), move(이동), organize(정리/정돈), date(마감일), unknown(기타),
+
+                    JSON 형식으로 다음과 같이 간결하게 응답해주세요:
+                    {
+                    "type": "의도유형",
+                    "keywords": ["관련키워드1", "관련키워드2"], // 검색어 또는 중요 단어
+                    "details": {}, // 추가할 업무 정보(add 타입일 경우)
+                    "taskInfo": {}, // 작업 관련 정보(update, delete, move 타입일 경우)
+                    "dateInfo": { // date 타입일 경우
+                        "action": "search/update/tag", // 찾기/수정/태그추가 등
+                        "condition": "overdue/today/tomorrow/thisWeek" // 마감일 조건
+                        }
+                    }
+
+                    예시 의도 파악:
+                    - "홍길동 담당 업무 찾아줘" → {"type": "search", "keywords": ["홍길동", "담당"]}
+                    - "프로젝트 기획 업무 추가해줘" → {"type": "add", "details": {"title": "프로젝트 기획"}}
+                    - "보고서 마감일 다음 주로 변경" → {"type": "update", "taskInfo": {"title": "보고서", "field": "dueDate"}}
+                    - "마감일 지난 업무 찾아줘" → {"type": "date", "keywords": ["마감일", "지난"], "dateInfo": {"action": "search", "condition": "overdue"}}
+                    `;
+
+                    try {
+                        const response = await janAI.sendPrompt(prompt, systemMessage);
+                        const aiContent = response?.choices?.[0]?.message?.content;
+                        
+                        if (!aiContent) throw new Error("의도 분석 응답을 받지 못했습니다.");
+                        
+                        // JSON 부분 추출 및 파싱
+                        const jsonMatch = aiContent.match(/{[\s\S]*}/);
+                        if (jsonMatch) {
+                            try {
+                                return JSON.parse(jsonMatch[0]);
+                            } catch (parseError) {
+                                console.warn("의도 분석 JSON 파싱 실패:", parseError);
+                                // 기본값 반환
+                                return { type: "unknown" };
+                            }
+                        } else {
+                            return { type: "unknown" };
+                        }
+                     }
+                 catch (error) {
+                        console.error("의도 분석 오류:", error);
+                        return { type: "unknown" };
+                     }
+                };
+
+                // 검색 명령어 처리 - 작은 모델에 최적화
+                const handleSearchCommand = async (originalPrompt, keywords) => {
+                    // 검색 관련 task만 필터링하여 컨텍스트 제공
+                    const relevantTasks = appData.tasks.filter(task => {
+                        const searchableText = [
+                            task.title || "",
+                            task.description || "",
+                            task.assignees || "",
+                            (task.tags || []).join(" ")
+                        ].join(" ").toLowerCase();
+                        
+                        return keywords.some(keyword => 
+                            searchableText.includes(keyword.toLowerCase())
+                        );
+                    });
+                    
+                    // 검색 결과 개수에 따라 다른 프롬프트 사용
+                    const systemMessage = relevantTasks.length > 0 
+                        ? `
+                다음은 '${keywords.join(", ")}' 키워드와 관련된 업무 목록입니다:
+                ${JSON.stringify(relevantTasks.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    assignees: t.assignees,
+                    dueDate: t.dueDate,
+                    priority: t.priority,
+                    completed: t.completed,
+                    columnId: t.columnId
+                })))}
+
+                사용자 질문: "${originalPrompt}"
+
+                위 정보를 바탕으로 사용자 질문에 정확히 답변해주세요. 
+                반환 형식은 다음과 같습니다:
+                {
+                "message": "검색 결과에 대한 간결한 답변 (한국어)",
+                "requires_confirmation": false,
+                "proposed_actions": [
+                    {
+                    "type": "info",
+                    "payload": {
+                        "details": [검색된 업무 목록 또는 정보]
+                    }
+                    }
+                ]
+                }
+                `
+                        : `
+                '${keywords.join(", ")}' 키워드와 관련된 업무를 찾을 수 없습니다.
+                다음과 같이 응답해주세요:
+                {
+                "message": "관련 업무를 찾을 수 없습니다.",
+                "requires_confirmation": false,
+                "proposed_actions": []
+                }
+                `;
+                    
+                    const response = await janAI.sendPrompt("검색 결과 정리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 업무 추가 명령어 처리
+                const handleAddCommand = async (originalPrompt, details) => {
+                    // 컬럼 정보만 제공하여 컨텍스트 간소화
+                    const columns = appData.columns.map(c => ({
+                        id: c.id,
+                        title: c.title
+                    }));
+                    
+                    const systemMessage = `
+                다음은 현재 사용 가능한 컬럼(보드) 목록입니다:
+                ${JSON.stringify(columns)}
+
+                사용자 요청: "${originalPrompt}"
+
+                사용자가 새 업무를 추가하려고 합니다. 어느 컬럼에 어떤 내용의 업무를 추가해야 할지 분석해주세요.
+                필수 정보: 업무명(title), 컬럼ID(columnId)
+                선택 정보: 설명(description), 마감일(dueDate), 중요도(priority: low/medium/high), 담당자(assignees), 태그(tags)
+
+                다음 JSON 형식으로 응답해주세요:
+                {
+                "message": "새 업무 추가 관련 확인 메시지 (한국어)",
+                "requires_confirmation": true,
+                "proposed_actions": [
+                    {
+                    "type": "add",
+                    "payload": {
+                        "columnId": "컬럼ID",
+                        "title": "업무명",
+                        "description": "설명",
+                        "dueDate": "YYYY-MM-DD",
+                        "priority": "중요도",
+                        "assignees": "담당자",
+                        "tags": ["태그1", "태그2"]
+                    }
+                    }
+                ]
+                }
+
+                모든 필드가 확실하지 않다면, 가능한 부분만 채워서 응답하세요.
+                `;
+                    
+                    const response = await janAI.sendPrompt("업무 추가 처리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 업무 수정 명령어 처리
+                const handleUpdateCommand = async (originalPrompt, taskInfo) => {
+                    // 수정 대상 업무 필터링
+                    let relevantTasks = [];
+                    if (taskInfo && taskInfo.title) {
+                        relevantTasks = appData.tasks.filter(task => 
+                            task.title.toLowerCase().includes(taskInfo.title.toLowerCase())
+                        );
+                    } else {
+                        // 제목 정보가 없으면 최근 업무 몇 개만 표시
+                        relevantTasks = appData.tasks.slice(-5);
+                    }
+                    
+                    const systemMessage = `
+                다음은 수정할 가능성이 있는 업무 목록입니다:
+                ${JSON.stringify(relevantTasks.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    dueDate: t.dueDate,
+                    priority: t.priority,
+                    assignees: t.assignees,
+                    columnId: t.columnId,
+                    completed: t.completed
+                })))}
+
+                사용자 요청: "${originalPrompt}"
+
+                수정할 업무와 변경할 내용을 파악해 다음 JSON 형식으로 응답해주세요:
+                {
+                "message": "업무 수정 확인 메시지 (한국어)",
+                "requires_confirmation": true,
+                "proposed_actions": [
+                    {
+                    "type": "update",
+                    "payload": {
+                        "taskId": "업무ID",
+                        "updates": {
+                        "title": "새 업무명",
+                        "description": "새 설명",
+                        "dueDate": "새 마감일",
+                        "priority": "새 중요도",
+                        "assignees": "새 담당자",
+                        "completed": false/true,
+                        "columnId": "새 컬럼ID",
+                        "tags": ["새 태그1", "새 태그2"]
+                        }
+                    }
+                    }
+                ]
+                }
+
+                변경할 필드만 포함하고 나머지는 생략하세요.
+                `;
+                    
+                    const response = await janAI.sendPrompt("업무 수정 처리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 업무 삭제 명령어 처리
+                const handleDeleteCommand = async (originalPrompt, taskInfo) => {
+                    // 삭제 대상 업무 필터링
+                    let relevantTasks = [];
+                    if (taskInfo && taskInfo.title) {
+                        relevantTasks = appData.tasks.filter(task => 
+                            task.title.toLowerCase().includes(taskInfo.title.toLowerCase())
+                        );
+                    } else {
+                        // 제목 정보가 없으면 최근 업무 몇 개만 표시
+                        relevantTasks = appData.tasks.slice(-5);
+                    }
+                    
+                    const systemMessage = `
+                다음은 삭제할 가능성이 있는 업무 목록입니다:
+                ${JSON.stringify(relevantTasks.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    dueDate: t.dueDate,
+                    priority: t.priority,
+                    assignees: t.assignees
+                })))}
+
+                사용자 요청: "${originalPrompt}"
+
+                삭제할 업무를 파악해 다음 JSON 형식으로 응답해주세요:
+                {
+                "message": "업무 삭제 확인 메시지 (한국어)",
+                "requires_confirmation": true,
+                "proposed_actions": [
+                    {
+                    "type": "delete",
+                    "payload": {
+                        "taskId": "업무ID"
+                    }
+                    }
+                ]
+                }
+
+                업무를 여러개 삭제해야 하는 경우 여러 delete 액션을 포함하세요.
+                업무를 찾을 수 없으면 "message"에 그 내용을 포함하고 "proposed_actions"는 빈 배열로 설정하세요.
+                `;
+                    
+                    const response = await janAI.sendPrompt("업무 삭제 처리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 업무 이동 명령어 처리
+                const handleMoveCommand = async (originalPrompt, taskInfo) => {
+                    // 이동 대상 업무 필터링
+                    let relevantTasks = [];
+                    if (taskInfo && taskInfo.title) {
+                        relevantTasks = appData.tasks.filter(task => 
+                            task.title.toLowerCase().includes(taskInfo.title.toLowerCase())
+                        );
+                    } else {
+                        // 제목 정보가 없으면 최근 업무 몇 개만 표시
+                        relevantTasks = appData.tasks.slice(-5);
+                    }
+                    
+                    // 컬럼 정보 제공
+                    const columns = appData.columns.map(c => ({
+                        id: c.id,
+                        title: c.title
+                    }));
+                    
+                    const systemMessage = `
+                다음은 이동할 가능성이 있는 업무 목록입니다:
+                ${JSON.stringify(relevantTasks.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    columnId: t.columnId
+                })))}
+
+                가능한 대상 컬럼 목록:
+                ${JSON.stringify(columns)}
+
+                사용자 요청: "${originalPrompt}"
+
+                이동할 업무와 대상 컬럼을 파악해 다음 JSON 형식으로 응답해주세요:
+                {
+                "message": "업무 이동 확인 메시지 (한국어)",
+                "requires_confirmation": true,
+                "proposed_actions": [
+                    {
+                    "type": "move",
+                    "payload": {
+                        "taskId": "업무ID",
+                        "targetColumnId": "대상컬럼ID"
+                    }
+                    }
+                ]
+                }
+
+                업무나 대상 컬럼을 찾을 수 없으면 "message"에 그 내용을 포함하고 "proposed_actions"는 빈 배열로 설정하세요.
+                `;
+                    
+                    const response = await janAI.sendPrompt("업무 이동 처리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 업무 정리 명령어 처리
+                const handleOrganizeCommand = async (originalPrompt) => {
+                    // 정리 대상 업무와 컬럼 정보 제공
+                    const columns = appData.columns.map(c => ({
+                        id: c.id,
+                        title: c.title
+                    }));
+                    
+                    // 명령어에 따라 전체 또는 일부 업무만 제공
+                    let tasksToOrganize = appData.tasks;
+                    if (originalPrompt.toLowerCase().includes("마감")) {
+                        // 마감일 관련 명령이면 마감일이 있는 업무만 필터링
+                        tasksToOrganize = appData.tasks.filter(t => t.dueDate);
+                    } else if (originalPrompt.toLowerCase().includes("우선순위") || 
+                            originalPrompt.toLowerCase().includes("중요도")) {
+                        // 우선순위 관련 명령이면 우선순위 정보가 있는 업무만
+                        tasksToOrganize = appData.tasks.filter(t => t.priority);
+                    }
+                    
+                    const systemMessage = `
+                사용자 요청: "${originalPrompt}"
+
+                다음은 현재 컬럼 목록입니다:
+                ${JSON.stringify(columns)}
+
+                다음은 정리할 업무 목록입니다:
+                ${JSON.stringify(tasksToOrganize.map(t => ({
+                    id: t.id,
+                    title: t.title,
+                    dueDate: t.dueDate,
+                    priority: t.priority,
+                    assignees: t.assignees,
+                    columnId: t.columnId,
+                    completed: t.completed
+                })))}
+
+                사용자의 요청에 따라 업무를 정리해주세요. 업무 정리는 다음 작업을 포함할 수 있습니다:
+                1. 업무 이동 (move)
+                2. 업무 업데이트 (update)
+                3. 업무 삭제 (delete)
+
+                필요한 작업들을 파악해 다음 JSON 형식으로 응답해주세요:
+                {
+                "message": "업무 정리 제안 설명 (한국어)",
+                "requires_confirmation": true,
+                "proposed_actions": [
+                    // 필요한 작업들...
+                ]
+                }
+
+                액션은 최대 5개까지만 제안하세요.
+                `;
+                    
+                    const response = await janAI.sendPrompt("업무 정리: " + originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 일반적인 명령어 처리 (유형 분류 실패 시)
+                const handleGenericCommand = async (originalPrompt) => {
+                    // 작은 모델에게 부담되지 않도록 최소한의 정보만 제공
+                    const basicInfo = {
+                        taskCount: appData.tasks.length,
+                        columnCount: appData.columns.length,
+                        columnNames: appData.columns.map(c => c.title)
+                    };
+                    
+                    const systemMessage = `
+                현재 업무 관리 앱 정보:
+                - 총 업무 수: ${basicInfo.taskCount}개
+                - 컬럼 수: ${basicInfo.columnCount}개
+                - 컬럼 이름: ${basicInfo.columnNames.join(', ')}
+
+                사용자 요청: "${originalPrompt}"
+
+                사용자의 요청을 이해하고 응답해주세요. 작업이 필요하면 다음 JSON 형식으로 응답하고, 
+                단순 질문이면 간단한 정보 응답을 JSON 형식으로 제공해주세요:
+
+                {
+                "message": "사용자 요청에 대한 응답 (한국어)",
+                "requires_confirmation": false/true,
+                "proposed_actions": [] // 필요시 작업 제안
+                }
+
+                작업이 필요 없는 단순 응답:
+                {
+                "message": "요청에 대한 답변 (한국어)",
+                "requires_confirmation": false,
+                "proposed_actions": []
+                }
+                `;
+                    
+                    const response = await janAI.sendPrompt(originalPrompt, systemMessage);
+                    processAIResponse(response);
+                };
+
+                // 마감일 관련 명령어 처리
+                    const handleDateCommand = async (originalPrompt, dateInfo) => {
+                        // 현재 날짜 기준으로 날짜 필터링 조건 생성
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        
+                        // 마감일 조건에 따른 업무 필터링
+                        let filteredTasks = [];
+                        let conditionDescription = "";
+                        
+                        switch (dateInfo?.condition) {
+                            case 'overdue':
+                                filteredTasks = appData.tasks.filter(task => {
+                                    if (!task.dueDate) return false;
+                                    return new Date(task.dueDate) < today;
+                                });
+                                conditionDescription = "마감일이 지난";
+                                break;
+                                
+                            case 'today':
+                                filteredTasks = appData.tasks.filter(task => {
+                                    if (!task.dueDate) return false;
+                                    const taskDate = new Date(task.dueDate);
+                                    return taskDate.getFullYear() === today.getFullYear() &&
+                                        taskDate.getMonth() === today.getMonth() &&
+                                        taskDate.getDate() === today.getDate();
+                                });
+                                conditionDescription = "오늘 마감인";
+                                break;
+                                
+                            case 'tomorrow':
+                                const tomorrow = new Date(today);
+                                tomorrow.setDate(today.getDate() + 1);
+                                filteredTasks = appData.tasks.filter(task => {
+                                    if (!task.dueDate) return false;
+                                    const taskDate = new Date(task.dueDate);
+                                    return taskDate.getFullYear() === tomorrow.getFullYear() &&
+                                        taskDate.getMonth() === tomorrow.getMonth() &&
+                                        taskDate.getDate() === tomorrow.getDate();
+                                });
+                                conditionDescription = "내일 마감인";
+                                break;
+                                
+                            case 'thisWeek':
+                                const weekEnd = new Date(today);
+                                weekEnd.setDate(today.getDate() + (6 - today.getDay())); // 이번 주 일요일
+                                filteredTasks = appData.tasks.filter(task => {
+                                    if (!task.dueDate) return false;
+                                    const taskDate = new Date(task.dueDate);
+                                    return taskDate >= today && taskDate <= weekEnd;
+                                });
+                                conditionDescription = "이번 주 마감인";
+                                break;
+                                
+                            default:
+                                // 기본: 마감일 있는 모든 업무
+                                filteredTasks = appData.tasks.filter(task => task.dueDate);
+                                conditionDescription = "마감일이 있는";
+                                break;
+                        }
+                        
+                        // 작업 유형에 따른 처리
+                        const actionType = dateInfo?.action || 'search';
+                        
+                        if (actionType === 'search') {
+                            // 검색 결과 반환
+                            const response = {
+                                message: `${conditionDescription} 업무 ${filteredTasks.length}개를 찾았습니다.`,
+                                requires_confirmation: false,
+                                proposed_actions: [
+                                    {
+                                        type: "info",
+                                        payload: {
+                                            details: filteredTasks.map(t => ({
+                                                id: t.id,
+                                                title: t.title,
+                                                dueDate: t.dueDate,
+                                                priority: t.priority,
+                                                columnId: t.columnId,
+                                                assignees: t.assignees
+                                            }))
+                                        }
+                                    }
+                                ]
+                            };
+                            
+                            handleAIResponse(response);
+                        } else if (actionType === 'tag') {
+                            // 태그 추가 제안
+                            const tagName = originalPrompt.match(/[''"]([^''"]+)[''"]/) ? 
+                                            originalPrompt.match(/[''"]([^''"]+)[''"]/) :
+                                            originalPrompt.includes('태그') ? 
+                                            originalPrompt.split('태그')[1].trim().split(' ')[0] : 
+                                            '마감임박';
+                                            
+                            const actions = filteredTasks.map(task => ({
+                                type: "update",
+                                payload: {
+                                    taskId: task.id,
+                                    updates: {
+                                        tags: [...(task.tags || []), tagName]
+                                    }
+                                }
+                            }));
+                            
+                            if (actions.length > 0) {
+                                const response = {
+                                    message: `${conditionDescription} 업무 ${filteredTasks.length}개에 '${tagName}' 태그를 추가하시겠습니까?`,
+                                    requires_confirmation: true,
+                                    proposed_actions: actions
+                                };
+                                
+                                handleAIResponse(response);
+                            } else {
+                                handleAIResponse({
+                                    message: `${conditionDescription} 업무가 없습니다.`,
+                                    requires_confirmation: false,
+                                    proposed_actions: []
+                                });
+                            }
+                        }
+                    };
+                                        
+
+                // AI 응답 처리 - 공통 함수
+                const processAIResponse = (response) => {
+                    const aiContent = response?.choices?.[0]?.message?.content;
+                    
+                    if (!aiContent) {
+                        aiResponse.innerHTML = "<div class='ai-error'>AI로부터 유효한 응답을 받지 못했습니다.</div>";
+                        return;
+                    }
+                    
+                    // JSON 부분 추출
+                    const jsonMatch = aiContent.match(/{[\s\S]*}/);
+                    if (jsonMatch) {
+                        try {
+                            const parsedResponse = JSON.parse(jsonMatch[0]);
+                            handleAIResponse(parsedResponse);
+                        } catch (parseError) {
+                            console.error("AI 응답 JSON 파싱 오류:", parseError);
+                            
+                            // 파싱 실패시 텍스트 그대로 표시
+                            aiResponse.innerHTML = `
+                                <div class='ai-error'>응답 형식에 문제가 있습니다. 원본 응답:</div>
+                                <div class='ai-response-text'>${utils.escapeHtml(aiContent)}</div>
+                            `;
+                        }
+                    } else {
+                        // JSON이 아닌 텍스트 응답 처리
+                        aiResponse.innerHTML = `<div class='ai-response-text'>${utils.escapeHtml(aiContent)}</div>`;
+                    }
+                };
+
+                // AI 응답 처리 및 UI 업데이트
+                let storedProposedActions = []; // 확인 대기 중인 작업을 임시 저장
+
+                const handleAIResponse = (response) => {
+                    aiResponse.innerHTML = ''; // 이전 응답 지우기
+                    storedProposedActions = []; // 이전 액션 제안 초기화
+
+                    const message = response?.message || "AI로부터 메시지를 받지 못했습니다.";
+                    const requiresConfirmation = response?.requires_confirmation === true; // 명시적으로 true인지 확인
+                    const proposedActions = response?.proposed_actions || [];
+
+                    // 메시지 표시
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'ai-response-text';
+                    messageDiv.textContent = message; // textContent로 안전하게 표시
+                    aiResponse.appendChild(messageDiv);
+
+                    // 'info' 타입 액션 처리 (정보성 메시지 추가 표시)
+                    const infoAction = proposedActions.find(a => a.type === 'info');
+                    if (infoAction && infoAction.payload?.details) {
+                        const detailsDiv = document.createElement('div');
+                        detailsDiv.style.marginTop = '10px';
+                        detailsDiv.style.fontSize = '0.9em';
+                        detailsDiv.style.opacity = '0.8';
+                        
+                        if (Array.isArray(infoAction.payload.details)) {
+                            detailsDiv.innerHTML = '<strong>관련 업무:</strong><ul>' +
+                                infoAction.payload.details.map(taskInfo =>
+                                    `<li>${utils.escapeHtml(taskInfo.title || '제목 없음')} ${
+                                        taskInfo.dueDate ? `(마감일: ${taskInfo.dueDate})` : ''
+                                    } ${
+                                        taskInfo.priority ? `(중요도: ${taskInfo.priority})` : ''
+                                    }</li>`
+                                ).join('') + '</ul>';
+                        } else if (typeof infoAction.payload.details === 'string') {
+                            detailsDiv.innerHTML = `<strong>정보:</strong> ${utils.escapeHtml(infoAction.payload.details)}`;
+                        }
+                        aiResponse.appendChild(detailsDiv);
+                    }
+
+                    if (requiresConfirmation && proposedActions.length > 0) {
+                        // 확인/취소 버튼 추가
+                        storedProposedActions = proposedActions; // 실행할 액션 저장
+
+                        const confirmationDiv = document.createElement('div');
+                        confirmationDiv.style.marginTop = '15px';
+                        confirmationDiv.style.display = 'flex';
+                        confirmationDiv.style.gap = '10px';
+
+                        const confirmButton = document.createElement('button');
+                        confirmButton.textContent = '확인 (실행)';
+                        confirmButton.className = 'ai-btn ai-btn--confirm';
+                        confirmButton.onclick = () => {
+                            aiResponse.innerHTML = `<div class='ai-thinking'>⏳ 작업을 처리 중입니다...</div>`;
+                            // 저장된 액션 실행
+                            executeProposedAIActions(storedProposedActions);
+                            storedProposedActions = []; // 실행 후 초기화
+                        };
+
+                        const cancelButton = document.createElement('button');
+                        cancelButton.textContent = '취소';
+                        cancelButton.className = 'ai-btn ai-btn--cancel ai-btn--secondary';
+                        cancelButton.onclick = () => {
+                            aiResponse.innerHTML = `<div class='ai-info'>ℹ️ 작업이 취소되었습니다.</div>`;
+                            storedProposedActions = []; // 취소 시 초기화
+                        };
+
+                        confirmationDiv.appendChild(confirmButton);
+                        confirmationDiv.appendChild(cancelButton);
+                        aiResponse.appendChild(confirmationDiv);
+                    } else if (!requiresConfirmation && proposedActions.length === 0 && !infoAction) {
+                        // 작업 없음 & 정보 없음 메시지 강조
+                        messageDiv.style.fontStyle = 'italic';
+                    }
+                };
+
+                // 제안된 AI 액션 실행
+                const executeProposedAIActions = (actions) => {
+                    let performedActions = false;
+                    let actionResults = []; // 각 액션의 성공/실패 메시지
+
+                    try {
+                        actions.forEach(action => {
+                            const { type, payload } = action;
+                            let resultMessage = '';
+                            
+                            try {
+                                switch (type) {
+                                    case 'add':
+                                        if (payload.columnId && payload.title) {
+                                            addTask({
+                                                columnId: payload.columnId,
+                                                title: payload.title,
+                                                description: payload.description,
+                                                dueDate: payload.dueDate,
+                                                priority: payload.priority || 'medium',
+                                                assignees: payload.assignees,
+                                                tags: payload.tags || []
+                                            });
+                                            resultMessage = `✅ '${payload.title}' 업무 추가 완료.`;
+                                            performedActions = true;
+                                        } else {
+                                            throw new Error("추가 액션에 필요한 정보가 부족합니다.");
+                                        }
+                                        break;
+                                        
+                                    case 'update':
+                                        if (payload.taskId && payload.updates) {
+                                            const taskIndex = appData.tasks.findIndex(t => t.id === payload.taskId);
+                                            if (taskIndex > -1) {
+                                                const task = appData.tasks[taskIndex];
+                                                updateTask(payload.taskId, { ...task, ...payload.updates });
+                                                resultMessage = `✅ '${task.title}' 업무 수정 완료.`;
+                                                performedActions = true;
+                                            } else {
+                                                throw new Error(`ID '${payload.taskId}'의 업무를 찾을 수 없습니다.`);
+                                            }
+                                        } else {
+                                            throw new Error("수정 액션에 필요한 정보가 부족합니다.");
+                                        }
+                                        break;
+                                        
+                                    case 'delete':
+                                        if (payload.taskId) {
+                                            const task = appData.tasks.find(t => t.id === payload.taskId);
+                                            if (task) {
+                                                const taskTitle = task.title; // 삭제 전 제목 저장
+                                                deleteTask(payload.taskId);
+                                                resultMessage = `✅ '${taskTitle}' 업무 삭제 완료.`;
+                                                performedActions = true;
+                                            } else {
+                                                throw new Error(`ID '${payload.taskId}'의 업무를 찾을 수 없습니다.`);
+                                            }
+                                        } else {
+                                            throw new Error("삭제 액션에 필요한 정보가 부족합니다.");
+                                        }
+                                        break;
+                                        
+                                    case 'move':
+                                        if (payload.taskId && payload.targetColumnId) {
+                                            const task = appData.tasks.find(t => t.id === payload.taskId);
+                                            const column = appData.columns.find(c => c.id === payload.targetColumnId);
+                                            
+                                            if (task && column) {
+                                                moveTask(payload.taskId, payload.targetColumnId);
+                                                resultMessage = `✅ '${task.title}' 업무를 '${column.title}' 컬럼으로 이동 완료.`;
+                                                performedActions = true;
+                                            } else {
+                                                throw new Error("이동할 업무 또는 대상 컬럼을 찾을 수 없습니다.");
+                                            }
+                                        } else {
+                                            throw new Error("이동 액션에 필요한 정보가 부족합니다.");
+                                        }
+                                        break;
+                                        
+                                    case 'info':
+                                        // 정보 액션은 별도 처리 필요 없음
+                                        resultMessage = `ℹ️ 정보 조회 완료.`;
+                                        break;
+                                        
+                                    default:
+                                        console.warn("알 수 없는 AI 액션 타입:", type);
+                                        resultMessage = `⚠️ 알 수 없는 액션 타입 '${type}'`;
+                                }
+                                
+                                actionResults.push(resultMessage);
+                            } catch (actionError) {
+                                console.error(`Error executing AI action ${type}:`, actionError);
+                                actionResults.push(`❌ ${type} 액션 처리 중 오류: ${actionError.message}`);
+                            }
+                        });
+
+                        if (performedActions) {
+                            saveData(); // 모든 액션 처리 후 한 번만 저장
+                            renderBoard(); // UI 업데이트
+                            
+                            // 성공 메시지 표시
+                            aiResponse.innerHTML = `<div class='ai-success'>${actionResults.filter(r => r.startsWith('✅') || r.startsWith('ℹ️')).join('<br>')}</div>`;
+                            
+                            if(actionResults.some(r => r.startsWith('❌') || r.startsWith('⚠️'))) {
+                                aiResponse.innerHTML += `<div class='ai-error' style='margin-top: 10px;'><strong>일부 작업 실패:</strong><br>${actionResults.filter(r => r.startsWith('❌') || r.startsWith('⚠️')).join('<br>')}</div>`;
+                            }
+                        } else {
+                            // 실행된 작업이 없을 때
+                            if (actionResults.some(r => r.startsWith('❌') || r.startsWith('⚠️'))) {
+                                aiResponse.innerHTML = `<div class='ai-error'><strong>작업 실패:</strong><br>${actionResults.filter(r => r.startsWith('❌') || r.startsWith('⚠️')).join('<br>')}</div>`;
+                            } else {
+                                aiResponse.innerHTML = `<div class='ai-info'>ℹ️ 요청하신 작업이 완료되었습니다 (데이터 변경 없음).</div>`;
+                            }
+                        }
+                    } catch (globalError) {
+                        console.error("Error during AI action execution:", globalError);
+                        aiResponse.innerHTML = `<div class='ai-error'>⚠️ AI 액션 실행 중 예외 발생: ${utils.escapeHtml(globalError.message)}</div>`;
+                    }
+                };
+
+                // AI로 업무 정리 기능
+                const organizeTasksWithAI = async () => {
+                    await processAICommand("업무를 정리해주세요: 마감일이 지난 업무는 '중요도: 높음'으로 변경하고, 오늘 마감인 업무는 '오늘마감' 태그를 추가해주세요. 완료된 업무는 맨 아래로 정렬해주세요.");
+                };
+            // --- Modal Handling ---
+            // Store reference to the element that was focused before opening the modal
+            let elementFocusedBeforeModal;
+
+            const openTaskModal = (mode = 'add', columnId = null, taskId = null) => {
+                elementFocusedBeforeModal = document.activeElement; // Store focus
+
+                taskForm.reset();
+                tagsContainer.innerHTML = '';
+                currentTags = [];
+                taskModal.setAttribute('aria-hidden', 'false'); // Make modal accessible
+
+                const today = new Date().toISOString().split('T')[0];
+                taskForm.taskDueDate.value = today; // Default due date
+                taskForm.taskPriority.value = 'medium'; // Default priority
+
+                if (mode === 'edit' && taskId) {
+                    const task = getTaskDataById(taskId);
+                    if (task) {
+                        modalTitle.textContent = '업무 수정';
+                        taskForm.taskId.value = task.id;
+                        taskForm.columnId.value = task.columnId;
+                        taskForm.taskTitle.value = task.title;
+                        taskForm.taskDescription.value = task.description || '';
+                        taskForm.taskDueDate.value = task.dueDate || ''; // Allow empty date
+                        taskForm.taskAssignees.value = task.assignees || '';
+                        taskForm.taskPriority.value = task.priority || 'medium';
+                        if (task.tags && task.tags.length > 0) {
+                            currentTags = [...task.tags];
+                            renderTags();
+                        }
+                    } else {
+                        console.error("업무 수정 오류: ID를 찾을 수 없음", taskId);
+                        utils.showFeedback("수정하려는 업무를 찾을 수 없습니다.", 'error');
+                        taskModal.setAttribute('aria-hidden', 'true'); // Hide if error
+                        return; // Don't open modal
+                    }
+                } else {
+                    const columnName = getColumnTitleElement(columnId)?.textContent || '새';
+                    modalTitle.textContent = `${columnName} 업무 추가`;
+                    taskForm.taskId.value = '';
+                    taskForm.columnId.value = columnId;
+                     taskForm.taskDueDate.value = ''; // Start with empty date for new tasks
+                }
+
+                taskModal.classList.add('visible');
+                requestAnimationFrame(() => { // Wait for display:flex to apply
+                    taskModal.classList.add('modal--visible');
+                    taskForm.taskTitle.focus(); // Set focus to the first input
+                     // Basic focus trap concept (needs more robust implementation for production)
+                     // Add keydown listener to modal content to trap focus
+                });
+            };
+
+            const closeModal = () => {
+                taskModal.classList.remove('modal--visible');
+                taskModal.setAttribute('aria-hidden', 'true');
+
+                // Wait for transition to finish before removing 'visible' (display: none)
+                 // The timeout should match the CSS transition duration
+                setTimeout(() => {
+                    taskModal.classList.remove('visible');
+                    if (elementFocusedBeforeModal) {
+                        elementFocusedBeforeModal.focus(); // Restore focus
+                    }
+                }, 300); // Match CSS transition duration
+            };
+
+            const openDetailModal = (taskId) => {
+                elementFocusedBeforeModal = document.activeElement;
+                const task = getTaskDataById(taskId);
+                if (!task) return;
+
+                // Use textContent or utils.escapeHtml for security
+                detailContent.innerHTML = `
+                    <h3 id="taskDetailTitle">${utils.escapeHtml(task.title)}</h3>
+                    <p><strong>상태:</strong> ${task.completed ? '완료' : '진행중'}</p>
+                    <p><strong>중요도:</strong> ${task.priority || '보통'}</p>
+                    <p><strong>마감일:</strong> ${utils.formatDueDateForDisplay(task.dueDate)} (${task.dueDate || '미지정'})</p>
+                    <p><strong>담당자:</strong> ${utils.escapeHtml(task.assignees || '미지정')}</p>
+                    ${task.tags && task.tags.length > 0 ?
+                        `<p><strong>태그:</strong> ${task.tags.map(t => `<span class="task__tag">${utils.escapeHtml(t)}</span>`).join(' ')}</p>` : ''}
+                    <p><strong>설명:</strong></p>
+                    <p style="white-space: pre-wrap; word-wrap: break-word;">${utils.escapeHtml(task.description || '없음')}</p>
+                `;
+
+                detailModal.setAttribute('aria-hidden', 'false');
+                detailModal.classList.add('visible');
+                requestAnimationFrame(() => {
+                    detailModal.classList.add('modal--visible');
+                    detailModal.querySelector('.modal__close').focus(); // Focus close button
+                });
+            };
+
+            const closeDetailModal = () => {
+                detailModal.classList.remove('modal--visible');
+                detailModal.setAttribute('aria-hidden', 'true');
+                setTimeout(() => {
+                    detailModal.classList.remove('visible');
+                     if (elementFocusedBeforeModal) {
+                        elementFocusedBeforeModal.focus();
+                    }
+                }, 300);
+            };
+
+            // --- Tag Management ---
+            const addTag = (tagText) => {
+                const tag = tagText.trim();
+                if (tag && !currentTags.includes(tag)) {
+                    if (currentTags.length >= 10) { // Limit tags?
+                        utils.showFeedback("태그는 최대 10개까지 추가할 수 있습니다.", 'warning');
+                        return;
+                    }
+                    currentTags.push(tag);
+                    renderTags();
+                }
+                tagInput.value = ''; // Clear input after adding
+            };
+
+            const removeTag = (tagIndex) => {
+                if (tagIndex >= 0 && tagIndex < currentTags.length) {
+                     const removedTag = currentTags.splice(tagIndex, 1)[0];
+                     renderTags();
+                     // utils.showFeedback(`'${removedTag}' 태그 삭제됨.`); // Maybe too noisy
+                }
+            };
+
+            const renderTags = () => {
+                tagsContainer.innerHTML = '';
+                if (currentTags.length === 0) {
+                    // Optional: Show placeholder text when no tags
+                    // tagsContainer.innerHTML = '<p style="font-style: italic; color: var(--text-secondary-color);">태그가 없습니다.</p>';
+                    return;
+                }
+                currentTags.forEach((tag, index) => {
+                    const tagEl = document.createElement('span');
+                    tagEl.className = 'form-group__tag';
+                    tagEl.textContent = tag; // Set text content directly
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button'; // Prevent form submission
+                    removeBtn.className = 'form-group__tag-remove';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.dataset.tagIndex = index;
+                    removeBtn.setAttribute('aria-label', `${tag} 태그 삭제`);
+                    removeBtn.addEventListener('click', () => removeTag(index)); // Add listener here
+
+                    tagEl.appendChild(removeBtn);
+                    tagsContainer.appendChild(tagEl);
+                });
+            };
+
+            // --- Drag and Drop ---
+            const handleDragStart = (e) => {
+                // Check if dragging is initiated from a valid handle or the task itself
+                // For example, prevent drag start if clicking on input/button inside task
+                if (e.target.closest('input, button, textarea, select')) {
+                    e.preventDefault();
+                    return;
+                }
+                draggedTask = e.target;
+                setTimeout(() => draggedTask.classList.add('task--dragging'), 0);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedTask.dataset.taskId); // Required for Firefox
+            };
+
+            const handleDragEnd = () => {
+                if (draggedTask) {
+                    draggedTask.classList.remove('task--dragging');
+                }
+                removePlaceholder(); // Ensure placeholder is removed
+                board.querySelectorAll('.column__content--drag-over').forEach(col => {
+                    col.classList.remove('column__content--drag-over');
+                });
+                draggedTask = null;
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault(); // Necessary to allow drop
+                if (!draggedTask) return;
+                e.dataTransfer.dropEffect = 'move';
+
+                const columnContent = e.target.closest('.column__content');
+                if (!columnContent) return;
+
+                columnContent.classList.add('column__content--drag-over'); // Highlight column
+
+                const afterElement = getDragAfterElement(columnContent, e.clientY);
+                updatePlaceholder(columnContent, afterElement);
+            };
+
+            const handleDragLeave = (e) => {
+                const columnContent = e.target.closest('.column__content');
+                // Check if the mouse is truly leaving the column content area
+                if (columnContent && !columnContent.contains(e.relatedTarget)) {
+                    columnContent.classList.remove('column__content--drag-over');
+                    removePlaceholder();
+                }
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const columnContent = e.target.closest('.column__content');
+                if (columnContent && draggedTask) {
+                    columnContent.classList.remove('column__content--drag-over');
+                    const targetColumnId = columnContent.dataset.columnId;
+                    const taskId = draggedTask.dataset.taskId;
+
+                    const placeholder = columnContent.querySelector('.task--placeholder');
+                    const insertBeforeEl = placeholder ? placeholder.nextElementSibling : null;
+                    const insertBeforeTaskId = insertBeforeEl?.dataset.taskId;
+
+                    removePlaceholder();
+
+                    // Only move if the position actually changed
+                    if (draggedTask.parentElement !== columnContent || draggedTask.nextElementSibling !== insertBeforeEl) {
+                         moveTask(taskId, targetColumnId, insertBeforeTaskId);
+                         // Optimistic UI update (move DOM element immediately) + background data update
+                         // columnContent.insertBefore(draggedTask, insertBeforeEl);
+                         // updateColumnCounter(originalColumnId); // Need originalColumnId
+                         // updateColumnCounter(targetColumnId);
+                         // // Then call a function to update the data model without full re-render
+                         // updateTaskDataPosition(taskId, targetColumnId, insertBeforeTaskId);
+                    }
+                }
+                 handleDragEnd(); // Clean up
+            };
+
+            const getDragAfterElement = (container, y) => {
+                const draggableElements = [...container.querySelectorAll('.task:not(.task--dragging):not(.task--placeholder)')];
+                return draggableElements.reduce((closest, child) => {
+                    const box = child.getBoundingClientRect();
+                    const offset = y - box.top - box.height / 2;
+                    if (offset < 0 && offset > closest.offset) {
+                        return { offset: offset, element: child };
+                    } else {
+                        return closest;
+                    }
+                }, { offset: Number.NEGATIVE_INFINITY }).element;
+            };
+
+            // Placeholder functions
+            const createPlaceholder = () => {
+                if (!dragPlaceholder) {
+                    dragPlaceholder = document.createElement('div');
+                    dragPlaceholder.className = 'task task--placeholder';
+                    // Match height roughly to the dragged task?
+                    if (draggedTask) {
+                         dragPlaceholder.style.height = `${draggedTask.offsetHeight}px`;
+                    }
+                }
+                return dragPlaceholder;
+            };
+
+            const removePlaceholder = () => {
+                if (dragPlaceholder && dragPlaceholder.parentNode) {
+                    dragPlaceholder.parentNode.removeChild(dragPlaceholder);
+                }
+                // dragPlaceholder = null; // Don't nullify, reuse the element
+            };
+
+            const updatePlaceholder = (container, afterElement) => {
+                removePlaceholder(); // Remove from previous position first
+                const placeholder = createPlaceholder();
+                if (afterElement) {
+                    container.insertBefore(placeholder, afterElement);
+                } else {
+                    container.appendChild(placeholder); // Append if no element after
+                }
+            };
+
+
+            // --- Context Menu ---
+            const showColumnMenu = (buttonElement, columnId) => {
+                closeColumnMenu(); // 기존 메뉴 닫기
+
+                currentMenu = document.createElement('div');
+                currentMenu.className = 'menu';
+                currentMenu.setAttribute('role', 'menu');
+
+                const createMenuItem = (text, action, ariaLabel) => {
+                    const item = document.createElement('div');
+                    item.className = 'menu__item';
+                    item.textContent = text;
+                    item.setAttribute('role', 'menuitem');
+                    item.tabIndex = -1; // Make focusable by script if needed
+                    item.onclick = () => {
+                        action();
+                        closeColumnMenu();
+                    };
+                    if (ariaLabel) item.setAttribute('aria-label', ariaLabel);
+                    return item;
+                };
+
+                currentMenu.appendChild(createMenuItem('완료된 항목 삭제', () => deleteCompletedTasks(columnId)));
+                currentMenu.appendChild(createMenuItem('전체 삭제', () => deleteAllTasksFromColumn(columnId), '경고: 해당 컬럼의 모든 항목을 삭제합니다'));
+
+                const separator = document.createElement('div');
+                separator.className = 'menu__separator';
+                separator.setAttribute('role', 'separator');
+                currentMenu.appendChild(separator);
+
+                currentMenu.appendChild(createMenuItem('텍스트 파일로 내보내기', () => exportColumnToText(columnId)));
+
+                document.body.appendChild(currentMenu);
+
+                // Positioning
+                const btnRect = buttonElement.getBoundingClientRect(); // <-- 변경: 기준 요소를 buttonElement로
+                const menuRect = currentMenu.getBoundingClientRect(); // 메뉴 자체의 크기 (변경 없음)
+                let top = btnRect.bottom + window.scrollY + 2;
+                let left = btnRect.left + window.scrollX;
+
+                // Adjust if menu goes off-screen
+                if (left + menuRect.width > window.innerWidth - 10) {
+                    left = btnRect.right + window.scrollX - menuRect.width;
+                }
+                if (top + menuRect.height > window.innerHeight - 10) {
+                    top = btnRect.top + window.scrollY - menuRect.height - 2;
+                }
+
+                currentMenu.style.top = `${Math.max(0, top)}px`;
+                currentMenu.style.left = `${Math.max(0, left)}px`;
+
+                requestAnimationFrame(() => {
+                     currentMenu.classList.add('menu--visible');
+                     currentMenu.querySelector('.menu__item')?.focus(); // Focus first item?
+                });
+
+                // --- 외부 클릭 및 ESC 키 리스너 추가 (handleClickOutsideMenu에 buttonElement 전달) ---
+                setTimeout(() => {
+                    // document.addEventListener('click', handleClickOutsideMenu, { capture: true, once: true }); // 이전 코드
+                    // 클릭 이벤트 핸들러에 buttonElement 정보도 함께 전달
+                    document.addEventListener('click', (e) => handleClickOutsideMenu(e, buttonElement), { capture: true, once: true });
+                    document.addEventListener('keydown', handleMenuKeyDown, { capture: true }); // Keydown 핸들러는 변경 필요 없을 수 있음
+                }, 0);
+            };
+            const closeColumnMenu = () => {
+                if (currentMenu) {
+                    currentMenu.classList.remove('menu--visible');
+                     document.removeEventListener('keydown', handleMenuKeyDown, { capture: true });
+                    // Remove from DOM after transition
+                    currentMenu.addEventListener('transitionend', () => {
+                        currentMenu?.remove(); // Check if still exists
+                        currentMenu = null;
+                    }, { once: true });
+                }
+                 document.removeEventListener('click', handleClickOutsideMenu, { capture: true }); // Ensure listener removed
+            };
+
+            const handleClickOutsideMenu = (event) => {
+                if (currentMenu && !currentMenu.contains(event.target) && !event.target.closest('.action-btn--menu')) {
+                    closeColumnMenu();
+                } else {
+                    // If click was inside menu, re-add listener (because of {once: true})
+                     // Or better: don't use {once:true} and remove listener explicitly in closeColumnMenu
+                     // Let's stick with the current logic for now, but it's less robust.
+                }
+            };
+
+            const handleMenuKeyDown = (event) => {
+                 if (!currentMenu) return;
+                 if (event.key === 'Escape') {
+                     closeColumnMenu();
+                     // Optionally return focus to the menu button
+                     // event.target.closest('.column__actions').querySelector('.action-btn--menu').focus();
+                 }
+                 // Add arrow key navigation if desired
+            };
+
+            // --- Export ---
+            const exportColumnToText = (columnId) => {
+                const tasksToExport = appData.tasks.filter(task => task.columnId === columnId)
+                                            .sort((a, b) => (new Date(a.dueDate || '9999-12-31')) - (new Date(b.dueDate || '9999-12-31')));
+                if (tasksToExport.length === 0) {
+                    utils.showFeedback('내보낼 작업이 없습니다.');
+                    return;
+                }
+
+                const columnTitle = getColumnTitleElement(columnId)?.textContent || columnId;
+                let text = `== ${columnTitle} ==\nExported on: ${new Date().toLocaleString('ko-KR')}\n\n`;
+                tasksToExport.forEach(task => {
+                    text += `[${task.completed ? 'x' : ' '}] ${task.title}\n`;
+                    text += `   - 중요도: ${task.priority || '보통'}\n`;
+                    text += `   - 마감일: ${utils.formatDueDateForDisplay(task.dueDate)} (${task.dueDate || '미지정'})\n`;
+                    text += `   - 담당자: ${task.assignees || '미지정'}\n`;
+                    if (task.tags && task.tags.length > 0) {
+                        text += `   - 태그: ${task.tags.join(', ')}\n`;
+                    }
+                    if (task.description) {
+                        text += `   - 설명:\n     ${task.description.replace(/\n/g, '\n     ')}\n`; // Indent description lines
+                    }
+                    text += `\n`;
+                });
+
+                try {
+                    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const filename = columnTitle.replace(/[^a-z0-9_\-가-힣]/gi, '_');
+                    a.download = `${filename}_업무목록_${new Date().toISOString().split('T')[0]}.txt`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    utils.showFeedback(`${columnTitle} 목록을 파일로 내보냈습니다.`);
+                } catch(e) {
+                    console.error("파일 내보내기 오류:", e);
+                    utils.showFeedback("파일 내보내기 중 오류 발생", "error");
+                    // Fallback: show text in a new window/tab
+                    const newWindow = window.open();
+                    newWindow.document.write('<pre>' + utils.escapeHtml(text) + '</pre>');
+                }
+            };
+
+            // --- Search/Filter ---
+            const filterTasks = (searchTerm) => {
+                const term = searchTerm.toLowerCase().trim();
+                const allTasks = board.querySelectorAll('.task');
+                let visibleCount = 0;
+
+                allTasks.forEach(taskEl => {
+                    // Ignore placeholder during filtering
+                    if (taskEl.classList.contains('task--placeholder')) return;
+
+                    const taskId = taskEl.dataset.taskId;
+                    const task = getTaskDataById(taskId);
+                    let isVisible = false;
+
+                    if (!task) {
+                        isVisible = false; // Hide if task data not found
+                    } else if (term === '') {
+                        isVisible = true; // Show all if search is empty
+                    } else {
+                        // Search in title, description, assignees, tags
+                        const searchableText = [
+                            task.title,
+                            task.description || '',
+                            task.assignees || '',
+                            (task.tags || []).join(' ')
+                        ].join(' ').toLowerCase();
+                        isVisible = searchableText.includes(term);
+                    }
+
+                    taskEl.style.display = isVisible ? '' : 'none';
+                    if (isVisible) visibleCount++;
+                });
+
+                 // Optionally update column counters based on visible tasks? (Might be confusing)
+                 // Update empty states based on visible tasks per column
+                 appData.columns.forEach(col => {
+                     const contentEl = getColumnContentElement(col.id);
+                     if (contentEl) {
+                         const visibleTasksInColumn = contentEl.querySelectorAll('.task:not([style*="display: none"])').length;
+                         const emptyState = contentEl.querySelector('.empty-state');
+                         if (visibleTasksInColumn === 0 && !emptyState && term !== '') { // Only show empty state during active search
+                            const searchEmptyState = createEmptyState();
+                            searchEmptyState.textContent = `'${term}' 검색 결과 없음`;
+                            contentEl.appendChild(searchEmptyState);
+                         } else if ((visibleTasksInColumn > 0 || term === '') && emptyState) {
+                             emptyState.remove();
+                         }
+                         // Restore original empty state if search is cleared and column is truly empty
+                         else if (term === '' && appData.tasks.filter(t=> t.columnId === col.id).length === 0 && !emptyState) {
+                              contentEl.appendChild(createEmptyState());
+                         }
+                     }
+                 });
+            };
+            // Debounced version for event listener
+            const debouncedFilterTasks = utils.debounce(filterTasks, DEBOUNCE_DELAY);
+
+
+            // --- Form Handling ---
+            const handleFormSubmit = (event) => {
+                event.preventDefault();
+                const formData = new FormData(taskForm);
+                const taskId = formData.get('taskId');
+                const taskData = {
+                    columnId: formData.get('columnId'),
+                    title: formData.get('taskTitle').trim(),
+                    description: formData.get('taskDescription').trim(),
+                    dueDate: formData.get('taskDueDate') || null, // Store as null if empty
+                    assignees: formData.get('taskAssignees').trim(),
+                    priority: formData.get('taskPriority'),
+                    tags: [...currentTags] // Get tags from the current modal state
+                };
+
+                if (!taskData.title) {
+                    utils.showFeedback('업무명을 입력해주세요.', 'warning');
+                    taskForm.taskTitle.focus();
+                    return;
+                }
+                // Basic date validation (optional)
+                if (taskData.dueDate && isNaN(new Date(taskData.dueDate).getTime())) {
+                    utils.showFeedback('유효하지 않은 날짜 형식입니다.', 'warning');
+                    taskForm.taskDueDate.focus();
+                    return;
+                }
+
+                if (taskId) {
+                    updateTask(taskId, taskData);
+                } else {
+                    addTask(taskData);
+                     utils.showFeedback(`'${taskData.title}' 업무 추가됨.`);
+                }
+                closeModal();
+            };
+
+            // --- Event Delegation Handler ---
+            const handleBoardClick = (event) => {
+                const target = event.target;
+                const menuButton = target.closest('.action-btn--menu');
+                const columnEl = target.closest('.column'); // 컬럼 요소 찾기 (기존과 동일)
+
+                // --- Column Actions ---
+                if (columnEl) {
+                    const columnId = columnEl.dataset.columnId;
+                    // Add Task Button
+                    if (target.matches('.action-btn--add')) {
+                        openTaskModal('add', columnId);
+                        return;
+                    }
+                    // Column Menu Button// menuButton을 찾았는지 확인
+                    // showColumnMenu 호출 시 event 대신 menuButton (클릭된 버튼)을 전달
+                    if (menuButton) { 
+                    showColumnMenu(menuButton, columnId); // <-- event 대신 menuButton 전달
+                    return; 
+                    }
+                    // Column Title (handled by dblclick listener on titleEl)
+                }
+
+                // --- Task Actions ---
+                if (taskEl) {
+                    const taskId = taskEl.dataset.taskId;
+                    const actionTarget = target.closest('[data-action]');
+                    const action = actionTarget?.dataset.action;
+
+                    switch(action) {
+                        case 'deleteTask':
+                            const task = getTaskDataById(taskId);
+                            if (task && confirm(`'${task.title}' 업무를 삭제하시겠습니까?`)) {
+                                deleteTask(taskId);
+                            }
+                            break;
+                        case 'toggleComplete':
+                            // Ensure the click was directly on the checkbox itself
+                            if (target.matches('.task__checkbox')) {
+                                toggleComplete(taskId);
+                            }
+                            break;
+                        case 'openDetail':
+                             // Open detail modal when clicking title or general task area (but not checkbox/delete)
+                             if (!target.matches('.task__checkbox') && !target.matches('.task__delete-btn')) {
+                                 openDetailModal(taskId);
+                             }
+                            break;
+                         // Double-click to edit is handled by a separate listener on the task element itself
+                    }
+                    return; // Stop further processing if a task action was handled
+                }
+
+                // --- Tag Remove Button (in Modal) ---
+                 // This needs to be handled differently as it's outside the board delegate
+                 // We added direct listener in renderTags
+            };
+
+
+            // --- Keyboard Shortcuts ---
+            const handleKeyDown = (event) => {
+                // Ctrl+Enter / Cmd+Enter to submit form when modal is open
+                 const isModalOpen = taskModal.classList.contains('visible');
+                 const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+                 const modKeyPressed = isMac ? event.metaKey : event.ctrlKey;
+
+                if (isModalOpen && modKeyPressed && event.key === 'Enter') {
+                     // Check if focus is inside the textarea, if so, allow default newline behavior
+                     if (document.activeElement === taskForm.taskDescription) {
+                         return; // Allow newline in textarea
+                     }
+                    event.preventDefault(); // Prevent default newline in other inputs
+                    const submitBtn = taskForm.querySelector('button[type="submit"]');
+                    if (submitBtn) submitBtn.click();
+                    return;
+                }
+
+                // Escape to close modals or menus
+                if (event.key === 'Escape') {
+                     if (currentMenu) {
+                         closeColumnMenu();
+                         // TODO: Return focus to menu button?
+                         return;
+                     }
+                    if (taskModal.classList.contains('visible')) {
+                         closeModal();
+                         return;
+                     }
+                    if (detailModal.classList.contains('visible')) {
+                         closeDetailModal();
+                         return;
+                     }
+                     if (aiInterface.classList.contains('active')) {
+                         aiInterface.classList.remove('active');
+                         aiInterface.setAttribute('aria-hidden', 'true');
+                         // TODO: Return focus to AI toggle button?
+                         return;
+                     }
+                     // Close column title input if active
+                     const activeInput = document.querySelector('.column__title-input');
+                     if (activeInput) {
+                         activeInput.blur(); // Trigger blur to cancel/save
+                     }
+                    return;
+                }
+
+                // Enter in tag input to add tag
+                if (document.activeElement === tagInput && event.key === 'Enter') {
+                    event.preventDefault(); // Prevent form submission
+                    if (tagInput.value.trim()) {
+                        addTag(tagInput.value);
+                    }
+                }
+            };
+
+            // --- Initialization ---
+            const init = async () => {
+                console.log("Initializing Task Board...");
+                loadData(); // Load data and settings first
+                renderBoard(); // Initial render
+
+                // Event Listeners
+                board.addEventListener('click', handleBoardClick);
+                taskForm.addEventListener('submit', handleFormSubmit);
+                searchInput.addEventListener('input', (e) => debouncedFilterTasks(e.target.value));
+                themeToggle.addEventListener('click', toggleDarkMode);
+                document.addEventListener('keydown', handleKeyDown);
+
+                // Tab functionality (basic example)
+                document.querySelectorAll('.tabs__tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        document.querySelectorAll('.tabs__tab').forEach(t => t.classList.remove('tabs__tab--active'));
+                        this.classList.add('tabs__tab--active');
+                        // TODO: Implement actual tab switching logic if needed
+                        console.log("Tab clicked:", this.textContent);
+                    });
+                });
+
+                 // Tag input listener (specific for Enter key)
+                tagInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                         e.preventDefault();
+                         if (tagInput.value.trim()) {
+                            addTag(tagInput.value);
+                         }
+                    }
+                });
+
+                // --- AI Interface Listeners ---
+                aiModelSelector.addEventListener('change', (e) => {
+                    const selectedModel = e.target.value;
+                    if (selectedModel && appData.janAI.availableModels.some(m => m.id === selectedModel)) {
+                        appData.janAI.model = selectedModel;
+                        console.log("AI Model changed to:", selectedModel);
+                    }
+                });
+
+                toggleAI.addEventListener('click', () => {
+                    const isActive = aiInterface.classList.toggle('active');
+                    aiInterface.setAttribute('aria-hidden', !isActive);
+                    if (isActive) {
+                        aiPrompt.focus();
+                    } else if (elementFocusedBeforeModal === toggleAI) {
+                        // If AI button was focused before, return focus (basic check)
+                        toggleAI.focus();
+                    }
+                });
+
+                closeAI.addEventListener('click', () => {
+                    aiInterface.classList.remove('active');
+                    aiInterface.setAttribute('aria-hidden', 'true');
+                     // Return focus to the toggle button
+                     toggleAI.focus();
+                });
+
+                executeAI.addEventListener('click', () => {
+                    processAICommand(aiPrompt.value.trim());
+                    // Keep prompt value for potential retry/edit? Or clear? Let's clear.
+                    // aiPrompt.value = '';
+                });
+
+                 aiPrompt.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for newline? No, handle in main keydown.
+                         e.preventDefault(); // Prevent newline
+                         executeAI.click();
+                    }
+                });
+
+                 aiOrganize.addEventListener('click', organizeTasksWithAI);
+
+                // AI Suggestion Click Handler (using event delegation)
+                aiSuggestions.addEventListener('click', (e) => {
+                    const suggestion = e.target.closest('.ai-suggestion');
+                    if (suggestion) {
+                        const promptText = suggestion.dataset.prompt || suggestion.textContent;
+                        aiPrompt.value = promptText;
+                        aiPrompt.focus();
+                        // Optionally execute immediately?
+                        // executeAI.click();
+                    }
+                });
+
+                // --- Final Steps ---
+                await janAI.checkConnection(); // Check connection and populate models
+                console.log("Task Board Initialized.");
+            };
+
+            // --- Public API ---
+            return {
+                init,
+                // Modals are opened/closed via event handlers now, direct calls less needed
+                closeModal, // Keep for buttons
+                closeDetailModal, // Keep for buttons
+                // addTag, // Internal now
+                // removeTag // Internal now
+            };
+
+        })(utils); // Pass utils object
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', app.init);
+    </script>
+</body>
+</html>
