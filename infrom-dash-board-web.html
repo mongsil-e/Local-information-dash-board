@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Task Management</title>
+    <title>Information dash board</title>
     <style>
         :root {
             /* Light Theme */
@@ -255,14 +255,260 @@
             .ai-btn, .ai-model-selector { font-size: 12px; padding: 6px 10px; }
         }
 
+        /* 탭 콘텐츠 관련 스타일 */
+        .tab-contents {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .tab-content {
+            display: none;
+            width: 100%;
+        }
+        .tab-content--active {
+            display: block;
+        }
+
+        /* PGM 변경 내역 페이지 스타일 */
+        .history-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            height: calc(80vh - 180px);
+            min-height: 500px;
+        }
+
+        .history-column, .history-detail {
+            background-color: var(--column-bg);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .history-header, .history-detail__header {
+            padding: 16px;
+            background-color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-header h2, .history-detail__header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .history-actions, .history-detail__actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 8px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .history-item--selected {
+            background-color: var(--hover-color);
+            border-color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .history-item__title {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .history-item__meta {
+            font-size: 12px;
+            color: var(--text-secondary-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .history-detail__content {
+            padding: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .history-detail__content h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-detail__info {
+            background-color: var(--secondary-color);
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 20px;
+        }
+
+        .history-detail__info p {
+            margin: 6px 0;
+        }
+
+        .history-detail__description h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0 10px 0;
+        }
+
+        .history-detail__description p, .history-detail__description ul {
+            margin: 12px 0;
+            line-height: 1.6;
+        }
+
+        .history-detail__description ul {
+            padding-left: 20px;
+        }
+
+        /* 반응형 조정 */
+        @media (max-width: 992px) {
+            .history-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            .history-column {
+                max-height: 300px;
+            }
+        }
+
         /* Animations */
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        /* --- 새로운 PGM History 컬럼 구조 스타일 --- */
+        .main-columns-container {
+            display: flex; /* 큰 컬럼들을 가로로 배치 */
+            gap: 20px; /* 큰 컬럼 사이 간격 */
+            width: 100%;
+            /* 필요하다면 높이 제한 추가: 예시 */
+            /* min-height: calc(80vh - 180px); */
+            /* max-height: 70vh; */
+        }
+
+        .main-column {
+            flex: 1; /* 각 큰 컬럼이 동일한 너비를 가지도록 설정 */
+            background-color: var(--column-bg);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--box-shadow);
+            padding: 16px;
+            display: flex; /* 내부 요소(제목, 서브컬럼 컨테이너)를 세로로 배치 */
+            flex-direction: column;
+            overflow: hidden; /* 내용 넘칠 경우 처리 (필요시 조정) */
+        }
+
+        .main-column-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 16px 0; /* 아래쪽 여백 */
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center; /* 제목 가운데 정렬 (선택적) */
+            flex-shrink: 0; /* 제목 영역은 줄어들지 않도록 */
+        }
+
+        .sub-columns-container {
+            display: flex; /* 서브 컬럼들을 가로로 배치 */
+            gap: 10px; /* 서브 컬럼 사이 간격 */
+            flex-grow: 1; /* 남은 세로 공간을 채우도록 설정 */
+            min-height: 0; /* flex 아이템 내부 스크롤 위해 필요 */
+        }
+
+        .sub-column {
+            flex: 1; /* 각 서브 컬럼이 동일한 너비를 가지도록 설정 */
+            background-color: var(--secondary-color); /* 서브 컬럼 배경색 구분 (선택적) */
+            border-radius: var(--border-radius-sm);
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            display: flex; /* 내부 요소(제목, 내용)를 세로로 배치 */
+            flex-direction: column;
+            overflow: hidden; /* 내부 스크롤 위해 */
+        }
+
+        .sub-column-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 10px 0; /* 아래쪽 여백 */
+            text-align: center; /* 제목 가운데 정렬 (선택적) */
+            flex-shrink: 0; /* 제목 영역 줄어들지 않도록 */
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--border-color); /* 구분선 (선택적) */
+        }
+
+        .sub-column-content {
+            flex-grow: 1; /* 남은 세로 공간을 채우도록 */
+            overflow-y: auto; /* 내용이 많으면 세로 스크롤 생성 */
+            padding: 5px; /* 내용 영역 패딩 (선택적) */
+        }
+
+        /* 반응형 조정 (예시: 화면 너비 992px 이하일 때) */
+        @media (max-width: 992px) {
+            .main-columns-container {
+                flex-direction: column; /* 큰 컬럼들을 세로로 쌓음 */
+            }
+            .sub-columns-container {
+                 /* 서브 컬럼이 너무 작아지면 세로로 쌓을 수도 있음 (선택적) */
+                /* flex-direction: column; */
+            }
+        }
+        /* --- // 새로운 PGM History 컬럼 구조 스타일 --- */
+        /* --- 서브 컬럼 헤더 및 추가 버튼 스타일 --- */
+        .sub-column-header {
+            display: flex; /* 제목과 버튼을 가로로 배치 */
+            justify-content: space-between; /* 제목은 왼쪽, 버튼은 오른쪽으로 */
+            align-items: center; /* 세로 중앙 정렬 */
+            margin-bottom: 10px; /* 아래 내용과의 간격 */
+            padding-bottom: 8px; /* 아래 구분선과의 간격 */
+            border-bottom: 1px dashed var(--border-color); /* 구분선 */
+        }
+
+        /* 서브 컬럼 제목 스타일 조정 (헤더 div 안으로 이동하면서 기존 스타일 일부 제거/수정) */
+        .sub-column-title {
+            margin: 0; /* 기본 마진 제거 */
+            padding: 0; /* 기본 패딩 제거 */
+            border: none; /* 기본 테두리 제거 */
+            /* font-size, font-weight는 유지 */
+        }
+
+        /* 서브 컬럼 추가 버튼 스타일 (기존 action-btn 스타일 활용) */
+        .sub-column-add-btn {
+            /* 필요하다면 크기나 패딩을 미세 조정할 수 있습니다. */
+            padding: 2px;
+            width: 24px;
+            height: 24px;
+            font-size: 18px;
+            flex-shrink: 0; /* 버튼 크기가 줄어들지 않도록 함 */
+        }
+        /* --- // 서브 컬럼 헤더 및 추가 버튼 스타일 --- */
+
     </style>
 </head>
 <body>
     <header class="header">
-        <div class="header__logo">인폼 현황판 Enhanced</div>
+        <div class="header__logo">인폼 현황판</div>
         <div class="header__user-area">
             <div class="header__user-name">인폼</div>
             <button class="header__theme-toggle" aria-label="테마 전환 (라이트/다크)">🌓</button>
@@ -292,6 +538,97 @@
             <button id="aiOrganize" class="ai-btn ai-btn--secondary" aria-label="AI로 업무 정리 실행">
                 <span>🧠</span> AI로 업무 정리
             </button>
+        </div>
+
+                <!-- 탭 콘텐츠 컨테이너 -->
+                <div class="tab-contents">
+                    <!-- 업무 대시보드 탭 콘텐츠 (기본으로 표시) -->
+                    <div class="tab-content tab-content--active" id="dashboard-content">
+                    <!-- 이 영역은 비워둡니다. 기존 board가 여기 표시될 것입니다 -->
+                    </div>
+                    
+        <!-- PGM Update history 탭 콘텐츠 (버튼 추가) -->
+        <div class="tab-content" id="pgm-history-content">
+            <!-- 두 개의 큰 컬럼을 감싸는 컨테이너 -->
+            <div class="main-columns-container">
+
+                <!-- Apple 컬럼 -->
+                <div class="main-column apple-column">
+                    <h2 class="main-column-title">Apple</h2>
+                    <!-- Apple 하위 컬럼 컨테이너 -->
+                    <div class="sub-columns-container">
+                        <!-- Red 서브 컬럼 -->
+                        <div class="sub-column red-sub-column">
+                            <!-- 제목과 추가 버튼을 묶는 헤더 div -->
+                            <div class="sub-column-header">
+                                <h3 class="sub-column-title">Red</h3>
+                                <button class="action-btn action-btn--add sub-column-add-btn" data-column-target="apple-red" aria-label="Red 컬럼에 항목 추가">+</button>
+                            </div>
+                            <div class="sub-column-content" id="apple-red-content">
+                                <!-- Apple-Red 컬럼 내용이 동적으로 채워질 영역 -->
+                            </div>
+                        </div>
+                        <!-- Yellow 서브 컬럼 -->
+                        <div class="sub-column yellow-sub-column">
+                            <!-- 제목과 추가 버튼을 묶는 헤더 div -->
+                            <div class="sub-column-header">
+                                <h3 class="sub-column-title">Yellow</h3>
+                                <button class="action-btn action-btn--add sub-column-add-btn" data-column-target="apple-yellow" aria-label="Yellow 컬럼에 항목 추가">+</button>
+                            </div>
+                            <div class="sub-column-content" id="apple-yellow-content">
+                                <!-- Apple-Yellow 컬럼 내용이 동적으로 채워질 영역 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- // Apple 컬럼 -->
+
+                <!-- Pear 컬럼 -->
+                <div class="main-column pear-column">
+                    <h2 class="main-column-title">Pear</h2>
+                    <!-- Pear 하위 컬럼 컨테이너 -->
+                    <div class="sub-columns-container">
+                        <!-- Black 서브 컬럼 -->
+                        <div class="sub-column black-sub-column">
+                            <!-- 제목과 추가 버튼을 묶는 헤더 div -->
+                            <div class="sub-column-header">
+                                <h3 class="sub-column-title">Black</h3>
+                                <button class="action-btn action-btn--add sub-column-add-btn" data-column-target="pear-black" aria-label="Black 컬럼에 항목 추가">+</button>
+                            </div>
+                            <div class="sub-column-content" id="pear-black-content">
+                                <!-- Pear-Black 컬럼 내용이 동적으로 채워질 영역 -->
+                            </div>
+                        </div>
+                        <!-- Pink 서브 컬럼 -->
+                        <div class="sub-column pink-sub-column">
+                            <!-- 제목과 추가 버튼을 묶는 헤더 div -->
+                            <div class="sub-column-header">
+                                <h3 class="sub-column-title">Pink</h3>
+                                <button class="action-btn action-btn--add sub-column-add-btn" data-column-target="pear-pink" aria-label="pink 컬럼에 항목 추가">+</button>
+                            </div>
+                            <div class="sub-column-content" id="pear-pink-content">
+                                <!-- Pear-Pink 컬럼 내용이 동적으로 채워질 영역 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- // Pear 컬럼 -->
+
+            </div>
+        </div>
+        <!-- // PGM Update history 탭 콘텐츠 -->
+            
+            <!-- 통계 탭 콘텐츠 -->
+            <div class="tab-content" id="statistics-content">
+            <h2>통계 콘텐츠 영역</h2>
+            <p>통계 기능이 아직 구현되지 않았습니다.</p>
+            </div>
+            
+            <!-- 설정 탭 콘텐츠 -->
+            <div class="tab-content" id="settings-content">
+            <h2>설정 콘텐츠 영역</h2>
+            <p>설정 기능이 아직 구현되지 않았습니다.</p>
+            </div>
         </div>
 
         <div class="board" id="board">
@@ -521,46 +858,46 @@
                     this.modelsEndpoint = JAN_API_MODELS_ENDPOINT;
                 }
 
-// JanAI 클래스 내 checkConnection 함수 수정
+            // JanAI 클래스 내 checkConnection 함수 수정
 
-async checkConnection() {
-    // ... (기존 코드: fetch 요청 전까지)
-    try {
-        const response = await fetch(`${this.baseUrl}${this.modelsEndpoint}`); // 필요하다면 여기에 파라미터 추가 (가능성 3 참고)
-        if (!response.ok) throw new Error(`API 연결 실패 (${response.status})`);
+            async checkConnection() {
+                // ... (기존 코드: fetch 요청 전까지)
+                try {
+                    const response = await fetch(`${this.baseUrl}${this.modelsEndpoint}`); // 필요하다면 여기에 파라미터 추가 (가능성 3 참고)
+                    if (!response.ok) throw new Error(`API 연결 실패 (${response.status})`);
 
-        const data = await response.json();
-        const allModels = data.data || [];
+                    const data = await response.json();
+                    const allModels = data.data || [];
 
-        // --- 여기가 중요: 로컬/다운로드된 모델만 필터링 ---
-        // 예시: 만약 모델 객체에 'status' 속성이 있고, 준비된 상태가 'downloaded' 인 모델만 리스트업 해서 띄움
-        // 확인 방법 개발자 도구>네트워크>response> 로컬 모델과 아닌모델 비교시 downloaded와 downloadable의 차이점이 있었음음
-        const localModels = allModels.filter(model => model.status === 'downloaded' /* 또는 model.downloaded === true 등 */);
-        // 또는 ID 형식을 보고 필터링해야 할 수도 있습니다. (예: model.id.startsWith('local-') )
+                    // --- 여기가 중요: 로컬/다운로드된 모델만 필터링 ---
+                    // 예시: 만약 모델 객체에 'status' 속성이 있고, 준비된 상태가 'downloaded' 인 모델만 리스트업 해서 띄움
+                    // 확인 방법 개발자 도구>네트워크>response> 로컬 모델과 아닌모델 비교시 downloaded와 downloadable의 차이점이 있었음음
+                    const localModels = allModels.filter(model => model.status === 'downloaded' /* 또는 model.downloaded === true 등 */);
+                    // 또는 ID 형식을 보고 필터링해야 할 수도 있습니다. (예: model.id.startsWith('local-') )
 
-        // appData 업데이트 및 모델 선택기 채우기는 필터링된 목록(localModels)으로 수행
-        appData.janAI.connected = true;
-        appData.janAI.availableModels = localModels; // 필터링된 목록 저장
+                    // appData 업데이트 및 모델 선택기 채우기는 필터링된 목록(localModels)으로 수행
+                    appData.janAI.connected = true;
+                    appData.janAI.availableModels = localModels; // 필터링된 목록 저장
 
-        if (localModels.length > 0) {
-            appData.janAI.model = localModels[0].id; // 기본 선택도 필터링된 목록에서
-            this.updateModelSelector(localModels);   // 선택기 업데이트도 필터링된 목록으로
-            aiModelSelector.disabled = false;
-            toggleAI.disabled = false;
-            aiOrganize.disabled = false;
-            console.info("Jan.ai 연결 성공 (로컬 모델 필터링됨):", localModels.map(m => m.id).join(', '));
-        } else {
-            // 필터링 후 모델이 하나도 없다면
-            throw new Error("사용 가능한 로컬 AI 모델이 없습니다.");
-        }
-        return { connected: true, models: localModels }; // 반환값도 필터링된 목록으로
+                    if (localModels.length > 0) {
+                        appData.janAI.model = localModels[0].id; // 기본 선택도 필터링된 목록에서
+                        this.updateModelSelector(localModels);   // 선택기 업데이트도 필터링된 목록으로
+                        aiModelSelector.disabled = false;
+                        toggleAI.disabled = false;
+                        aiOrganize.disabled = false;
+                        console.info("Jan.ai 연결 성공 (로컬 모델 필터링됨):", localModels.map(m => m.id).join(', '));
+                    } else {
+                        // 필터링 후 모델이 하나도 없다면
+                        throw new Error("사용 가능한 로컬 AI 모델이 없습니다.");
+                    }
+                    return { connected: true, models: localModels }; // 반환값도 필터링된 목록으로
 
-    } catch (error) {
-        // ... (기존 에러 처리 코드)
-        console.error("Jan.ai 연결 또는 모델 필터링 오류:", error);
-        // ...
-    }
-}
+                } catch (error) {
+                    // ... (기존 에러 처리 코드)
+                    console.error("Jan.ai 연결 또는 모델 필터링 오류:", error);
+                    // ...
+                }
+            }
 
                 updateModelSelector(models) {
                     aiModelSelector.innerHTML = ''; // Clear existing options
@@ -694,7 +1031,7 @@ async checkConnection() {
                 // TODO: If quick add toggle is implemented, update visibility here
                 const quickAddElements = board.querySelectorAll('.column__quick-add');
                  quickAddElements.forEach(el => {
-                     el.style.display = appData.settings.showQuickAdd ? 'block' : 'none';
+                     el.style.display = appData.settings.showQuickAdd ? 'block' : 'none'; // Direct style for now
                  });
             };
 
@@ -885,6 +1222,79 @@ async checkConnection() {
                 }
             };
 
+
+             const renderPgmHistory = () => {
+                const pgmSubColumns = ['apple-red', 'apple-yellow', 'pear-black', 'pear-pink'];
+                pgmSubColumns.forEach(subColumnId => {
+                    const contentEl = document.getElementById(`${subColumnId}-content`);
+                    if (contentEl) {
+                        contentEl.innerHTML = '';
+                        const tasks = appData.tasks.filter(task => task.columnId === subColumnId);
+                        if (tasks.length === 0) {
+                            const emptyState = document.createElement('div');
+                            emptyState.className = 'empty-state';
+                            emptyState.textContent = '업무가 없습니다';
+                            contentEl.appendChild(emptyState);
+                        } else {
+                            tasks.forEach(task => {
+                                const taskEl = createTaskElement(task);
+                                
+                                // 더블클릭 이벤트 리스너 추가 (기존 이벤트 리스너가 PGM History 탭에서 작동하지 않을 수 있어서 명시적으로 추가)
+                                taskEl.addEventListener('dblclick', () => openTaskModal('edit', null, task.id));
+                                
+                                contentEl.appendChild(taskEl);
+                            });
+                        }
+                        
+                        // 드래그 앤 드롭 이벤트 리스너 추가
+                        contentEl.addEventListener('dragover', handleDragOver);
+                        contentEl.addEventListener('dragleave', handleDragLeave);
+                        contentEl.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            if (!draggedTask) return;
+                            
+                            const taskId = draggedTask.dataset.taskId;
+                            const targetColumnId = subColumnId;
+                            
+                            // 다른 컬럼으로 이동시키는 함수 호출
+                            moveTask(taskId, targetColumnId);
+                            
+                            // 드래그 오버 클래스 제거
+                            contentEl.classList.remove('column__content--drag-over');
+                        });
+                        
+                        // 이벤트 리스너 추가 - 삭제 버튼 클릭 처리
+                        contentEl.addEventListener('click', (event) => {
+                            const target = event.target;
+                            const taskEl = target.closest('.task');
+                            
+                            if (!taskEl) return; // task 요소가 아니면 무시
+                            
+                            const taskId = taskEl.dataset.taskId;
+                            const actionTarget = target.closest('[data-action]');
+                            const action = actionTarget?.dataset.action;
+                            
+                            if (action === 'deleteTask') {
+                                const task = getTaskDataById(taskId);
+                                if (task && confirm(`'${task.title}' 업무를 삭제하시겠습니까?`)) {
+                                    deleteTask(taskId);
+                                }
+                            } else if (action === 'toggleComplete') {
+                                // 체크박스 클릭 처리
+                                if (target.matches('.task__checkbox')) {
+                                    toggleComplete(taskId);
+                                }
+                            } else if (!target.matches('.task__checkbox') && !target.matches('.task__delete-btn')) {
+                                // 상세 정보 모달 열기 (체크박스와 삭제 버튼 클릭이 아닐 때)
+                                openDetailModal(taskId);
+                            }
+                        });
+                    }
+                });
+            };
+
+            // --- JanAI 클래스 외부 ---
+
             const createEmptyState = () => {
                 const emptyState = document.createElement('div');
                 emptyState.className = 'empty-state';
@@ -978,6 +1388,9 @@ async checkConnection() {
                         updateColumnCounter(columnId);
                         utils.showFeedback(`'${deletedTask.title}' 업무 삭제됨.`);
                     }
+                    
+                    // PGM update History 탭의 내용도 갱신
+                    renderPgmHistory();
                 }
             };
 
@@ -997,6 +1410,9 @@ async checkConnection() {
                         titleEl.classList.toggle('task__title--completed', task.completed);
                         // No full re-render needed
                     }
+                    
+                    // PGM update History 탭의 내용도 갱신
+                    renderPgmHistory();
                 }
             };
 
@@ -1043,6 +1459,10 @@ async checkConnection() {
 
                 saveData();
                 renderBoard(); // Re-render the entire board after move for simplicity, sorting needs full context
+                
+                // PGM update History 탭의 내용도 갱신
+                renderPgmHistory();
+                
                 // More optimized: move the DOM element directly and update counters
                 // const taskEl = board.querySelector(`.task[data-task-id="${taskId}"]`);
                 // const targetContent = getColumnContentElement(targetColumnId);
@@ -1140,7 +1560,7 @@ async checkConnection() {
                     return;
                 }
 
-                if (confirm(`${columnTitle}의 모든 항목(${tasksInColumn}개)을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다!`)) {
+                if (confirm(`${columnTitle}의 모든 항목(${tasksInColumn}개)을 삭제하시겠습니까?`)) {
                     appData.tasks = appData.tasks.filter(task => task.columnId !== columnId);
                     saveData();
                     renderBoard(); // Re-render needed
@@ -1829,7 +2249,7 @@ async checkConnection() {
                         confirmButton.textContent = '확인 (실행)';
                         confirmButton.className = 'ai-btn ai-btn--confirm';
                         confirmButton.onclick = () => {
-                            aiResponse.innerHTML = `<div class='ai-thinking'>⏳ 작업을 처리 중입니다...</div>`;
+                            aiResponse.innerHTML = "<div class='ai-thinking'>⏳ 작업을 처리 중입니다...</div>";
                             // 저장된 액션 실행
                             executeProposedAIActions(storedProposedActions);
                             storedProposedActions = []; // 실행 후 초기화
@@ -1839,7 +2259,7 @@ async checkConnection() {
                         cancelButton.textContent = '취소';
                         cancelButton.className = 'ai-btn ai-btn--cancel ai-btn--secondary';
                         cancelButton.onclick = () => {
-                            aiResponse.innerHTML = `<div class='ai-info'>ℹ️ 작업이 취소되었습니다.</div>`;
+                            aiResponse.innerHTML = "<div class='ai-info'>ℹ️ 작업이 취소되었습니다.</div>";
                             storedProposedActions = []; // 취소 시 초기화
                         };
 
@@ -2044,6 +2464,7 @@ async checkConnection() {
                 }, 300); // Match CSS transition duration
             };
 
+            
             const openDetailModal = (taskId) => {
                 elementFocusedBeforeModal = document.activeElement;
                 const task = getTaskDataById(taskId);
@@ -2329,7 +2750,7 @@ async checkConnection() {
                 if (currentMenu && !currentMenu.contains(event.target) && !event.target.closest('.action-btn--menu')) {
                     closeColumnMenu();
                 } else {
-                    // If click was inside menu, re-add listener (because of {once: true})
+                    // If click was inside menu, re-add listener (because of {once:true})
                      // Or better: don't use {once:true} and remove listener explicitly in closeColumnMenu
                      // Let's stick with the current logic for now, but it's less robust.
                 }
@@ -2482,6 +2903,10 @@ async checkConnection() {
                     addTask(taskData);
                      utils.showFeedback(`'${taskData.title}' 업무 추가됨.`);
                 }
+                
+                // PGM update History 탭 렌더링 추가
+                renderPgmHistory();
+                
                 closeModal();
             };
 
@@ -2509,6 +2934,7 @@ async checkConnection() {
                 }
 
                 // --- Task Actions ---
+                const taskEl = target.closest('.task');
                 if (taskEl) {
                     const taskId = taskEl.dataset.taskId;
                     const actionTarget = target.closest('[data-action]');
@@ -2566,8 +2992,8 @@ async checkConnection() {
                 if (event.key === 'Escape') {
                      if (currentMenu) {
                          closeColumnMenu();
-                         // TODO: Return focus to menu button?
-                         return;
+                         // Optionally return focus to the menu button
+                         // event.target.closest('.column__actions').querySelector('.action-btn--menu').focus();
                      }
                     if (taskModal.classList.contains('visible')) {
                          closeModal();
@@ -2577,7 +3003,7 @@ async checkConnection() {
                          closeDetailModal();
                          return;
                      }
-                     if (aiInterface.classList.contains('active')) {
+                    if (aiInterface.classList.contains('active')) {
                          aiInterface.classList.remove('active');
                          aiInterface.setAttribute('aria-hidden', 'true');
                          // TODO: Return focus to AI toggle button?
@@ -2631,6 +3057,14 @@ async checkConnection() {
                             addTag(tagInput.value);
                          }
                     }
+                });
+
+                // --- 추가된 코드: '+' 버튼 클릭 이벤트 핸들러 추가 ---
+                document.querySelectorAll('.sub-column-add-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const columnId = btn.dataset.columnTarget;
+                        app.openTaskModal('add', columnId);
+                    });
                 });
 
                 // --- AI Interface Listeners ---
@@ -2692,17 +3126,134 @@ async checkConnection() {
                 console.log("Task Board Initialized.");
             };
 
-            // --- Public API ---
-            return {
-                init,
-                // Modals are opened/closed via event handlers now, direct calls less needed
-                closeModal, // Keep for buttons
-                closeDetailModal, // Keep for buttons
-                // addTag, // Internal now
-                // removeTag // Internal now
-            };
+              return {
+                 init,
+                 closeModal,
+                 closeDetailModal,
+                 openTaskModal,
+                 renderPgmHistory
+                };
 
         })(utils); // Pass utils object
+
+                    // 탭 전환 관리
+        const tabManager = (function() {
+            // 탭과 콘텐츠 매핑
+            const tabMapping = {
+                0: 'dashboard-content',  // 업무 대시보드
+                1: 'pgm-history-content', // PGM Update history
+                2: 'statistics-content',  // 통계
+                3: 'settings-content'     // 설정
+            };
+            
+            // 현재 활성화된 탭 인덱스
+            let activeTabIndex = 0;
+            
+            // DOM 이동 함수
+            const moveBoardToTab = () => {
+                const board = document.getElementById('board');
+                const dashboardContent = document.getElementById('dashboard-content');
+                
+                // board의 현재 부모가 container인 경우만 이동
+                if (board.parentElement.className === 'container') {
+                    dashboardContent.appendChild(board);
+                }
+            };
+            
+
+            // 탭 활성화 함수
+            const activateTab = (tabIndex) => {
+                if (tabIndex === activeTabIndex) return; // 이미 활성화된 탭이면 무시
+                
+                // 모든 탭 콘텐츠 비활성화
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('tab-content--active');
+                });
+                
+                // 모든 탭 버튼 비활성화
+                document.querySelectorAll('.tabs__tab').forEach(tab => {
+                    tab.classList.remove('tabs__tab--active');
+                });
+                
+                // 선택한 탭 콘텐츠와 버튼 활성화
+                const contentId = tabMapping[tabIndex];
+                document.getElementById(contentId).classList.add('tab-content--active');
+                document.querySelectorAll('.tabs__tab')[tabIndex].classList.add('tabs__tab--active');
+                
+                // PGM Update history 탭(1번)을 선택했을 때 renderPgmHistory 호출
+                if (tabIndex === 1) {
+                    app.renderPgmHistory();
+                }
+                
+                // AI Controls 표시/숨김 처리
+                const aiControls = document.querySelector('.ai-controls');
+                if (aiControls) {
+                    // 업무 대시보드 탭(0번)일 때만 AI Controls 표시
+                    if (tabIndex === 0) {
+                        aiControls.style.display = '';  // 기본 표시 상태로 복원
+                    } else {
+                        aiControls.style.display = 'none';  // 숨김 처리
+                    }
+                }
+                
+                // AI 인터페이스가 열려있으면 닫기
+                const aiInterface = document.getElementById('aiInterface');
+                if (tabIndex !== 0 && aiInterface && aiInterface.classList.contains('active')) {
+                    aiInterface.classList.remove('active');
+                    aiInterface.setAttribute('aria-hidden', 'true');
+                }
+                
+                activeTabIndex = tabIndex;
+            };
+                        
+            // 초기화
+            const init = () => {
+                // board를 첫 번째 탭 콘텐츠로 이동
+                moveBoardToTab();
+                
+                // 탭 클릭 이벤트 리스너 설정
+                document.querySelectorAll('.tabs__tab').forEach((tab, index) => {
+                    tab.addEventListener('click', () => {
+                        activateTab(index);
+                    });
+                });
+                
+                // PGM 히스토리 탭 이벤트 리스너
+                document.querySelectorAll('.history-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        // 선택된 아이템 스타일 적용
+                        document.querySelectorAll('.history-item').forEach(i => {
+                            i.classList.remove('history-item--selected');
+                        });
+                        item.classList.add('history-item--selected');
+                        
+                        // 여기에 상세 정보 로드 로직 추가 가능
+                    });
+                });
+                
+                // 변경 내역 추가 버튼
+                const addHistoryBtn = document.getElementById('addHistoryBtn');
+                if (addHistoryBtn) {
+                    addHistoryBtn.addEventListener('click', () => {
+                        alert('변경 내역 추가 기능은 아직 구현되지 않았습니다.');
+                        // 여기에 변경 내역 추가 모달 표시 로직 추가 가능
+                    });
+                }
+            };
+            
+            
+            return {
+                init,
+                activateTab
+            };
+        })();
+
+        // 기존 app 초기화 이후에 tabManager 초기화
+        const originalInit = app.init;
+        app.init = async function() {
+            await originalInit.call(app); // 기존 초기화 함수 호출
+            tabManager.init(); // 탭 관리자 초기화
+        };
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', app.init);
