@@ -103,6 +103,31 @@
             let currentMenu = null;
             let currentTags = [];
 
+            let csrfToken = null; // Variable to store the CSRF token
+
+            // Function to fetch CSRF token from the server
+            const fetchCsrfToken = async () => {
+                try {
+                    const response = await fetch("/api/csrf-token");
+                    if (!response.ok) {
+                        throw new Error(`CSRF token fetch failed: ${response.statusText} (${response.status})`);
+                    }
+                    const data = await response.json();
+                    if (data.csrfToken) {
+                        csrfToken = data.csrfToken;
+                        console.log("CSRF token fetched and stored successfully.");
+                    } else {
+                        throw new Error("CSRF token not found in server response.");
+                    }
+                } catch (error) {
+                    console.error("Error fetching CSRF token:", error);
+                    csrfToken = null; // Ensure it is null on failure
+                    // Consider displaying a persistent error message to the user here
+                    // as state-changing operations will fail.
+                    // Example: utils.showPersistentError("Failed to initialize security token. Application may not function correctly.");
+                }
+            };
+
             // --- DOM Elements ---
             const board = document.getElementById('board');
             const taskModal = document.getElementById('taskModal');
@@ -368,6 +393,7 @@
 
             // --- 앱 초기화 함수 ---
             const init = async () => {
+                await fetchCsrfToken(); // Fetch CSRF token on init
                 //console.log("Initializing Task Board...");
 
                 // 테마 설정 적용
@@ -3507,6 +3533,19 @@
         // API 요청 래퍼 함수 (세션 만료 처리 포함)
         async function fetchWithAuth(url, options = {}) {
             try {
+                // Add CSRF token to headers for non-GET/HEAD/OPTIONS requests
+                if (csrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+                    options.headers = {
+                        ...options.headers,
+                        'CSRF-Token': csrfToken // Standard header name for csurf
+                    };
+                } else if (!options.method || ['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+                    // For GET or other safe methods, no CSRF token needed
+                } else if (!csrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+                    console.warn('CSRF token is not available. State-changing request might fail.');
+                    // Optionally, prevent the request or alert the user
+                }
+
                 const response = await fetch(url, options);
 
                 if (response.status === 401) {

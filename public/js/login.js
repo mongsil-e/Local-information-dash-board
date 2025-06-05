@@ -1,5 +1,9 @@
-        // 페이지 로드 시 자동으로 로그인 여부 확인
+// 페이지 로드 시 자동으로 로그인 여부 확인
         document.addEventListener('DOMContentLoaded', async () => {
+            // Add these lines to set initial form states
+            loginForm.style.display = "block"; // Default visible
+            changePasswordForm.style.display = "none"; // Default hidden
+
             try {
                 // 뒤로가기 방지를 위한 history 처리
                 history.pushState(null, null, location.href);
@@ -33,6 +37,8 @@
             } catch (error) {
                 // 오류가 발생해도 계속 진행 (로그인 안 된 상태로 간주)
                 console.error('로그인 상태 확인 중 오류:', error);
+                loginForm.style.display = "block"; // Ensure login form is visible
+                changePasswordForm.style.display = "none"; // Ensure change password form is hidden
             }
         });
 
@@ -53,6 +59,7 @@
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault(); // 폼 기본 제출 방지
             errorMessage.style.display = 'none'; // 이전 에러 메시지 숨김
+            changePasswordErrorMessage.style.display = 'none'; // 비밀번호 변경 에러 메시지도 숨김
 
             const employeeId = employeeIdInput.value.trim();
             const password = passwordInput.value;
@@ -60,6 +67,8 @@
             if (!employeeId || !password) {
                 errorMessage.textContent = '사번과 비밀번호를 모두 입력해주세요.';
                 errorMessage.style.display = 'block';
+                loginForm.style.display = "block"; // Ensure login form is visible
+                changePasswordForm.style.display = "none"; // Ensure change password form is hidden
                 return;
             }
 
@@ -83,46 +92,40 @@
                         errorMessage.textContent = data.message || '비밀번호 변경이 필요합니다.'; // 안내 메시지 표시
                         errorMessage.style.display = 'block';
 
-                        // 로그인 폼 숨기고 변경 폼 표시
                         loginForm.style.display = 'none';
                         changePasswordForm.style.display = 'block';
 
-                        // 변경 폼에 사번 저장
                         changePasswordEmployeeIdInput.value = employeeId;
-
-                        // 포커스를 현재 비밀번호 필드로 이동 (사용자 편의)
                         currentPasswordInput.focus();
-
                     } else {
                         // 비밀번호 변경 불필요 (정상 로그인 성공)
                         console.log('로그인 성공, 메인 페이지로 이동');
-                        // 메인 페이지로 리디렉션
                         window.location.replace('/');
                     }
                 } else {
                     // 로그인 실패
                     const errorData = await response.json();
 
-                    // 로그인 시도 횟수 초과 처리 (429 상태코드)
                     if (response.status === 429) {
                         errorMessage.textContent = errorData.error || '로그인 시도 횟수를 초과했습니다. 잠시 후 다시 시도해주세요.';
-                        // 스타일 강조
-                        errorMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.2)'; // 더 진한 색상
+                        errorMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.2)';
                         errorMessage.style.fontWeight = 'bold';
                     } else {
-                        // 일반 로그인 실패 (401 등)
                         errorMessage.textContent = errorData.error || '로그인 실패. 다시 시도해주세요.';
-                        // 기본 스타일 복원
                         errorMessage.style.backgroundColor = 'rgba(231, 76, 60, 0.1)';
                         errorMessage.style.fontWeight = 'normal';
                     }
 
                     errorMessage.style.display = 'block';
+                    loginForm.style.display = 'block'; // Ensure login form is visible on error
+                    changePasswordForm.style.display = 'none'; // Ensure change pwd form is hidden
                     console.error('로그인 실패:', response.status, errorData);
                 }
             } catch (error) {
                 errorMessage.textContent = '로그인 요청 중 오류 발생. 네트워크 연결을 확인해주세요.';
                 errorMessage.style.display = 'block';
+                loginForm.style.display = 'block'; // Ensure login form is visible on catch
+                changePasswordForm.style.display = 'none'; // Ensure change pwd form is hidden
                 console.error('로그인 요청 오류:', error);
             }
         });
@@ -137,7 +140,6 @@
             const newPassword = newPasswordInput.value;
             const confirmNewPassword = confirmNewPasswordInput.value;
 
-            // 클라이언트 측 유효성 검사
             if (!currentPassword || !newPassword || !confirmNewPassword) {
                 changePasswordErrorMessage.textContent = '모든 필드를 입력해주세요.';
                 changePasswordErrorMessage.style.display = 'block';
@@ -150,7 +152,7 @@
                 return;
             }
 
-            if (newPassword.length < 6) { // 서버와 동일한 최소 길이 검증
+            if (newPassword.length < 6) {
                 changePasswordErrorMessage.textContent = '새 비밀번호는 6자 이상이어야 합니다.';
                 changePasswordErrorMessage.style.display = 'block';
                 return;
@@ -170,15 +172,11 @@
                 });
 
                 if (response.ok) {
-                    // 비밀번호 변경 성공 (JWT는 서버에서 쿠키로 자동 설정됨)
                     const data = await response.json();
                     console.log('비밀번호 변경 성공:', data);
-                    alert('비밀번호가 성공적으로 변경되었습니다. 메인 페이지로 이동합니다.'); // 사용자 알림
-
-                    // 메인 페이지로 리디렉션
+                    alert('비밀번호가 성공적으로 변경되었습니다. 메인 페이지로 이동합니다.');
                     window.location.replace('/');
                 } else {
-                    // 비밀번호 변경 실패
                     const errorData = await response.json();
                     changePasswordErrorMessage.textContent = errorData.error || '비밀번호 변경 실패. 다시 시도해주세요.';
                     changePasswordErrorMessage.style.display = 'block';

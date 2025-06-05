@@ -6,6 +6,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose(); // sqlite3 모듈 추가, .verbose()는 디버깅 메시지를 더 자세히 보여줍니다.
 const jwt = require('jsonwebtoken'); // JWT 모듈 추가
 const cookieParser = require('cookie-parser'); // 쿠키 파싱 모듈 추가
+const csrf = require('csurf'); // CSRF protection
 const fs = require('fs'); // 파일 시스템 모듈 추가
 const bcrypt = require('bcrypt'); // bcrypt 라이브러리 추가
 const { defaultUsers } = require('./config'); // config.js에서 defaultUsers 가져오기
@@ -28,6 +29,31 @@ const app = express();
 app.disable('x-powered-by'); // X-Powered-By 헤더 비활성화
 app.use(express.json()); // 클라이언트가 보내는 JSON 데이터를 파싱하기 위해 꼭 필요!
 app.use(cookieParser()); // 쿠키 파싱 미들웨어 추가
+
+
+// HTTP to HTTPS Redirection Middleware
+// This should be placed fairly early, but after static file serving if those don't need HTTPS.
+// However, for full security, usually all traffic goes to HTTPS.
+// Placing it after cookie parser and before HSTS/CSP seems reasonable.
+app.use((req, res, next) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  // Check for http protocol or x-forwarded-proto indicating http
+  const isHttp = req.protocol === "http" ||
+                 (req.headers["x-forwarded-proto"] && req.headers["x-forwarded-proto"].split(',')[0].trim().toLowerCase() === "http");
+
+  if (isProduction && isHttp && typeof sslOptions !== 'undefined' && sslOptions && sslOptions.key && sslOptions.cert) {
+    // req.hostname might not include the port if behind a proxy that sets x-forwarded-host.
+    // req.headers.host includes hostname:port if port is non-standard for HTTP/HTTPS.
+    // Let's ensure we use the correct hostname and the globally defined httpsPort.
+    const host = req.hostname; // Use req.hostname for cleaner host, proxy should set x-forwarded-host
+    const httpsRedirectUrl = `https://${host}${httpsPort === 443 ? "" : `:${httpsPort}`}${req.originalUrl}`;
+
+    console.log(`Redirecting HTTP to HTTPS: ${req.protocol}://${req.headers.host}${req.originalUrl} -> ${httpsRedirectUrl}`);
+    return res.redirect(301, httpsRedirectUrl);
+  }
+  next();
+});
+
 
 // Middleware to set no-cache headers
 const setNoCacheHeaders = (req, res, next) => {
@@ -558,6 +584,25 @@ app.get('/', authenticatePage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+// CSRF Protection Setup
+// Important: CSRF middleware must come after cookie parser and body parser (express.json)
+// And before any routes that need protection.
+const csrfProtection = csrf({ cookie: true });
+
+// Endpoint to get CSRF token
+// This route itself needs csrfProtection to generate req.csrfToken()
+app.get("/api/csrf-token", csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Apply CSRF protection to all API routes that change state.
+// csurf middleware, when applied, automatically checks POST, PUT, DELETE, PATCH.
+// It does NOT check GET, HEAD, OPTIONS by default.
+// So, applying it broadly to '/api' path is fine.
+app.use('/api', csrfProtection);
+
+
 app.use('/api', setNoCacheHeaders); // Apply no-cache headers to all API routes
 // --- API 엔드포인트 정의 ---
 
@@ -899,7 +944,7 @@ const activeTokens = {
 // 로그인 실패 횟수 추적을 위한 객체 선언
 const loginFailureTracker = {
   failures: {}, // { employeeId: { count: Number, lastFailTime: Date } }
-  maxFailures: 5, // 최대 실패 허용 횟수
+  maxFailures: 10, // 최대 실패 허용 횟수
   lockDuration: 5 * 60 * 1000, // 5분 (밀리초 단위)
 
   // 로그인 실패 기록
@@ -1211,6 +1256,17 @@ app.use((req, res, next) => {
 // --- Global Error Handler ---
 // This should be the last middleware
 app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    console.warn('Invalid CSRF token received for path:', req.path, 'from IP:', req.ip);
+    // For API requests, send a JSON 403 response
+    if (req.path.startsWith("/api/") || (req.accepts('json') && !req.accepts('html'))) {
+      res.status(403).json({ error: 'Invalid CSRF token. Please refresh and try again.' });
+    } else {
+      // For browser requests, maybe a more user-friendly HTML page
+      res.status(403).send("<html><head><title>Invalid Request</title></head><body><h1>403 Forbidden - Invalid CSRF Token</h1><p>Your request could not be processed. Please refresh the page and try again. If the problem persists, please contact support.</p></body></html>");
+    }
+    return;
+  }
   console.error(`[GLOBAL ERROR HANDLER] Timestamp: ${new Date().toISOString()}, Path: ${req.path}, Error: `, err); // Log the full error server-side
 
   // Check if headers have already been sent
