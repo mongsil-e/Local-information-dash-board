@@ -28,6 +28,16 @@ const app = express();
 app.disable('x-powered-by'); // X-Powered-By 헤더 비활성화
 app.use(express.json()); // 클라이언트가 보내는 JSON 데이터를 파싱하기 위해 꼭 필요!
 app.use(cookieParser()); // 쿠키 파싱 미들웨어 추가
+
+// Middleware to set no-cache headers
+const setNoCacheHeaders = (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store'); // Often used with CDNs, good to have
+  next();
+};
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // HSTS 헤더 설정 미들웨어
@@ -43,20 +53,33 @@ app.use((req, res, next) => {
 
 // CSP 헤더 설정 미들웨어
 app.use((req, res, next) => {
-  res.setHeader(
-    'Content-Security-Policy',
-    "default-src 'self'; \
-script-src 'self' 'unsafe-inline' http://127.0.0.1:1337; \
-style-src 'self' 'unsafe-inline'; \
+  const isProduction = process.env.NODE_ENV === 'production';
+  let scriptSrc = "'self'"; // Default to 'self'
+  let connectSrc = "'self'"; // Default to 'self'
+
+  if (!isProduction) {
+    // Allow development server for scripts and connections in non-production
+    scriptSrc += " http://127.0.0.1:1337";
+    connectSrc += " http://127.0.0.1:1337";
+  }
+
+  // Construct the CSP string carefully
+  const cspValue = `default-src 'self'; \
+script-src ${scriptSrc}; \
+style-src 'self'; \
 font-src 'self'; \
-connect-src 'self' http://127.0.0.1:1337; \
+connect-src ${connectSrc}; \
 img-src 'self' data:; \
 object-src 'none'; \
 frame-ancestors 'none'; \
 base-uri 'self'; \
 form-action 'self'; \
 upgrade-insecure-requests; \
-block-all-mixed-content;"
+block-all-mixed-content;`
+
+  res.setHeader(
+    'Content-Security-Policy',
+    cspValue
   );
   next();
 });
@@ -65,27 +88,27 @@ block-all-mixed-content;"
 app.use((req, res, next) => {
   // 요청을 보낸 클라이언트의 Origin 가져오기
   const origin = req.headers.origin;
-  
+
   // 허용할 Origin 목록 (필요에 따라 PC의 IP 주소 등으로 변경)
   // 예: const allowedOrigins = ['http://localhost:3000', 'http://192.168.0.10:3000'];
   // 여기서는 요청한 Origin을 그대로 허용하도록 설정 (주의: 프로덕션에서는 특정 Origin만 허용하는 것이 안전)
   if (origin) {
-      res.header('Access-Control-Allow-Origin', origin); 
+      res.header('Access-Control-Allow-Origin', origin);
   }
-  
+
   // Credentials (쿠키 등) 허용 설정 추가
-  res.header('Access-Control-Allow-Credentials', 'true'); 
-  
+  res.header('Access-Control-Allow-Credentials', 'true');
+
   // 허용할 헤더
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   // 허용할 HTTP 메서드
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  
+
   // preflight 요청 처리
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
@@ -96,17 +119,17 @@ const httpsPort = 8443; // HTTPS 포트(443에서 변경)
 // SSL 인증서 생성 함수 (node-forge 사용)
 function generateSelfSignedCertificate() {
   console.log('자체 서명 인증서 생성 중...');
-  
+
   // 인증서 파일 경로
   const certDir = path.join(__dirname, 'ssl');
   const keyPath = path.join(certDir, 'key.pem');
   const certPath = path.join(certDir, 'cert.pem');
-  
+
   // 인증서 디렉토리가 있는지 확인
   if (!fs.existsSync(certDir)) {
     fs.mkdirSync(certDir, { recursive: true });
   }
-  
+
   // 인증서가 이미 존재하는지 확인
   if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
     console.log('SSL 인증서가 이미 존재합니다.');
@@ -115,23 +138,23 @@ function generateSelfSignedCertificate() {
       cert: fs.readFileSync(certPath, 'utf8')
     };
   }
-  
+
   try {
     // RSA 키 쌍 생성
     const keys = forge.pki.rsa.generateKeyPair(2048);
-    
+
     // 인증서 생성
     const cert = forge.pki.createCertificate();
     cert.publicKey = keys.publicKey;
     cert.serialNumber = '01' + crypto.randomBytes(19).toString('hex');
-    
+
     // 유효기간 설정 (1년)
     const now = new Date();
     cert.validity.notBefore = now;
     const expiry = new Date();
     expiry.setFullYear(now.getFullYear() + 1);
     cert.validity.notAfter = expiry;
-    
+
     // 주체 속성 설정
     const attrs = [
       { name: 'commonName', value: 'localhost' },
@@ -141,10 +164,10 @@ function generateSelfSignedCertificate() {
       { name: 'organizationName', value: 'My Dashboard' },
       { shortName: 'OU', value: 'Development' }
     ];
-    
+
     cert.setSubject(attrs);
     cert.setIssuer(attrs); // 자체 서명이므로 발급자와 주체가 동일
-    
+
     // 확장 설정
     cert.setExtensions([
       {
@@ -168,20 +191,20 @@ function generateSelfSignedCertificate() {
         ]
       }
     ]);
-    
+
     // 자체 서명
     cert.sign(keys.privateKey, forge.md.sha256.create());
-    
+
     // PEM 형식으로 변환
     const certPem = forge.pki.certificateToPem(cert);
     const keyPem = forge.pki.privateKeyToPem(keys.privateKey);
-    
+
     // 파일로 저장
     fs.writeFileSync(keyPath, keyPem);
     fs.writeFileSync(certPath, certPem);
-    
+
     console.log('SSL 인증서 생성 완료');
-    
+
     return {
       key: keyPem,
       cert: certPem
@@ -205,13 +228,13 @@ if (!sslOptions || !sslOptions.key || !sslOptions.cert) {
   console.error(`
 ===============================================================
   SSL 인증서 파일이 없거나 올바르지 않습니다. HTTPS를 사용하려면 다음 단계를 따라주세요:
-  
+
   1. 'ssl' 디렉토리를 확인하세요: mkdir ssl
-  
+
   2. Node.js의 forge 모듈을 사용하여 자동으로 인증서를 생성합니다.
-  
+
   3. 생성 후 서버를 다시 시작하세요.
-  
+
   * 참고: 현재는 HTTP 서버만 시작됩니다.
 ===============================================================
   `);
@@ -400,14 +423,14 @@ function initializeDatabase() {
 const authenticateToken = (req, res, next) => {
   // 쿠키에서 JWT 토큰 가져오기
   let token = req.cookies.token;
-  
-  
+
+
   // 쿠키에 토큰이 없으면 Authorization 헤더에서 확인
   if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
     console.log(`[인증 디버깅] Authorization 헤더에서 토큰 발견`);
   }
-  
+
   if (!token) {
     console.log(`[인증 디버깅] 토큰이 없음: 쿠키 및 Authorization 헤더 모두 토큰이 없음`);
     // API 요청에 대한 처리 유지 (JSON 응답)
@@ -424,32 +447,32 @@ const authenticateToken = (req, res, next) => {
   try {
     // 토큰 검증
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     // 토큰 소유자 (사용자 ID)
     const { employeeId } = decoded;
 
     // 토큰이 해당 사용자의 최신 활성 토큰인지 확인
     if (!activeTokens.isTokenValid(employeeId, token)) {
       console.log(`[인증 디버깅] 사용자 ${employeeId}의 토큰이 다른 세션에 의해 무효화됨`);
-      
+
       // 쿠키 삭제 (이전 세션 토큰)
       res.clearCookie('token');
-      
+
       // API 요청 시 다른 세션에 의해 로그아웃됨을 알림
       if (req.path.startsWith('/api/')) {
-        return res.status(401).json({ 
+        return res.status(401).json({
           error: '다른 위치에서 로그인하여 현재 세션이 종료되었습니다. 다시 로그인해주세요.',
           sessionExpired: true
         });
       }
-      
+
       // API가 아닌 경우 (HTML 페이지 요청)는 authenticatePage에서 처리하도록 401 반환
-      return res.status(401).json({ 
-        error: '세션 만료됨 (다른 로그인에 의해)', 
-        sessionExpired: true 
+      return res.status(401).json({
+        error: '세션 만료됨 (다른 로그인에 의해)',
+        sessionExpired: true
       });
     }
-    
+
     // 검증된 사용자 정보를 요청 객체에 추가
     req.user = decoded;
     next(); // 다음 미들웨어로 진행
@@ -458,7 +481,7 @@ const authenticateToken = (req, res, next) => {
     // API 요청에 대한 처리 유지 (JSON 응답)
     if (req.path.startsWith('/api/')) {
       // 만료/유효하지 않은 토큰의 경우 쿠키를 삭제하는 것이 좋습니다.
-      res.clearCookie('token'); 
+      res.clearCookie('token');
       return res.status(403).json({ error: '유효하지 않은 토큰입니다.' });
     }
      // API가 아닌 경우 (여기서는 /index.html 접근 시), 아래 authenticatePage 에서 처리하도록 next() 대신 오류를 반환하거나 다른 처리가 필요합니다.
@@ -491,24 +514,24 @@ const authenticatePage = (req, res, next) => {
     // 토큰 검증
     const decoded = jwt.verify(token, JWT_SECRET);
     console.log('[authenticatePage] 토큰 검증 성공. 사용자:', decoded.employeeId); // 로그 추가
-    
+
     // 토큰 소유자 (사용자 ID)
     const { employeeId } = decoded;
 
     // 토큰이 해당 사용자의 최신 활성 토큰인지 확인
     if (!activeTokens.isTokenValid(employeeId, token)) {
       console.log(`[authenticatePage] 사용자 ${employeeId}의 토큰이 다른 세션에 의해 무효화됨`);
-      
+
       // 쿠키 삭제 (이전 세션 토큰)
       res.clearCookie('token');
-      
+
       // 로그인 페이지로 리디렉션 (다른 세션에 의해 로그아웃됨을 쿼리 파라미터로 알림)
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       return res.redirect('/login.html?sessionExpired=true');
     }
-    
+
     req.user = decoded; // 사용자 정보 추가 (선택 사항, 페이지 로딩 시 필요하면 사용)
     next(); // 인증 성공, 다음 핸들러로 진행 (페이지 제공)
   } catch (err) {
@@ -535,6 +558,7 @@ app.get('/', authenticatePage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.use('/api', setNoCacheHeaders); // Apply no-cache headers to all API routes
 // --- API 엔드포인트 정의 ---
 
 // 인증 확인 API (클라이언트에서 로그인 상태 확인용)
@@ -547,22 +571,22 @@ app.get('/api/me', authenticateToken, (req, res) => {
 app.get('/api/auth-status', (req, res) => {
   // 쿠키에서 JWT 토큰 가져오기
   let token = req.cookies.token;
-  
+
   // 쿠키에 토큰이 없으면 Authorization 헤더에서 확인
   if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   }
-  
+
   if (!token) {
     // 토큰이 없으면 인증되지 않음 상태 반환 (에러가 아님)
     return res.json({ isAuthenticated: false });
   }
-  
+
   try {
     // 토큰 검증
     const decoded = jwt.verify(token, JWT_SECRET);
     // 검증된 사용자 정보 반환
-    res.json({ 
+    res.json({
       isAuthenticated: true,
       user: { employeeId: decoded.employeeId, name: decoded.name }
     });
@@ -575,7 +599,7 @@ app.get('/api/auth-status', (req, res) => {
 // 로그아웃 API
 app.post('/api/logout', authenticateToken, (req, res) => {
   // 사용자 ID 가져오기 (인증 미들웨어를 통과했으므로 req.user 사용 가능)
-  const userId = req.user ? req.user.employeeId : 'unknown'; 
+  const userId = req.user ? req.user.employeeId : 'unknown';
 
   // 로그아웃 로그 기록
   logTaskActivity('LOGOUT', null, userId, req.ip);
@@ -605,9 +629,9 @@ app.get('/api/data', authenticateToken, (req, res) => {
       data.columns = columns;
 
       // 2. 태스크 가져오기
-      db.all(`SELECT t.*, u.name as creatorName 
+      db.all(`SELECT t.*, u.name as creatorName
               FROM tasks t
-              LEFT JOIN users u ON t.creatorId = u.employeeId 
+              LEFT JOIN users u ON t.creatorId = u.employeeId
               ORDER BY t.createdAt ASC`, [], (err, tasks) => {
         if (err) {
           console.error(`태스크 조회 오류:`, err.message); // 타임스탬프 제거
@@ -621,6 +645,7 @@ app.get('/api/data', authenticateToken, (req, res) => {
         }));
 
         // 3. 모든 데이터 조회 완료 후 응답 전송
+        logTaskActivity('VIEW_ALL_DATA', null, req.user ? req.user.employeeId : 'unknown_user_view_data', req.ip);
         res.json(data);
       });
     });
@@ -652,24 +677,24 @@ app.post('/api/tasks', authenticateToken, (req, res) => {
       return res.status(500).json({ error: '태스크 추가 중 오류 발생' });
     }
     // console.log(`새 태스크 추가됨: ${id} (작성자: ${creatorId})`); // 주석 처리
-    
+
     // 태스크 추가 로그 기록
     logTaskActivity('ADD', id, creatorId, req.ip);
-    
+
     // 작성자 이름 조회
     db.get("SELECT name FROM users WHERE employeeId = ?", [creatorId], (err, user) => {
       if (err) {
         console.error(`작성자 조회 오류:`, err.message); // 타임스탬프 제거
         // 오류가 발생해도 태스크는 이미 추가되었으므로 계속 진행
       }
-      
+
       // 성공 시 추가된 태스크 정보 반환 (tags 포함)
-      const newTask = { 
-        ...req.body, 
-        completed: false, 
-        tags: tags || [], 
+      const newTask = {
+        ...req.body,
+        completed: false,
+        tags: tags || [],
         creatorId,
-        creatorName: user ? user.name : null 
+        creatorName: user ? user.name : null
       };
       res.status(201).json(newTask);
     });
@@ -837,28 +862,28 @@ function isRequestSecure(req) {
 const activeTokens = {
   // { employeeId: { token: string, timestamp: Date } }
   users: {},
-  
+
   // 사용자의 활성 토큰 설정
   setUserToken(employeeId, token) {
-    this.users[employeeId] = { 
-      token, 
-      timestamp: new Date() 
+    this.users[employeeId] = {
+      token,
+      timestamp: new Date()
     };
     console.log(`사용자 ${employeeId}의 새 토큰이 등록되었습니다.`);
   },
-  
+
   // 사용자 토큰 확인
   getUserToken(employeeId) {
     return this.users[employeeId] || null;
   },
-  
+
   // 토큰이 유효한지 확인 (활성 토큰과 일치하는지)
   isTokenValid(employeeId, token) {
     const userToken = this.users[employeeId];
     if (!userToken) return false; // 활성 토큰이 없음
     return userToken.token === token; // 토큰 일치 여부 확인
   },
-  
+
   // 사용자 토큰 삭제 (로그아웃 시)
   removeUserToken(employeeId) {
     if (this.users[employeeId]) {
@@ -876,7 +901,7 @@ const loginFailureTracker = {
   failures: {}, // { employeeId: { count: Number, lastFailTime: Date } }
   maxFailures: 5, // 최대 실패 허용 횟수
   lockDuration: 5 * 60 * 1000, // 5분 (밀리초 단위)
-  
+
   // 로그인 실패 기록
   recordFailure(employeeId) {
     const now = new Date();
@@ -888,7 +913,7 @@ const loginFailureTracker = {
     }
     console.log(`사용자 ${employeeId}의 로그인 실패 ${this.failures[employeeId].count}회 기록됨`);
   },
-  
+
   // 로그인 성공 시 실패 기록 초기화
   resetFailures(employeeId) {
     if (this.failures[employeeId]) {
@@ -896,17 +921,17 @@ const loginFailureTracker = {
       console.log(`사용자 ${employeeId}의 로그인 실패 기록 초기화됨`);
     }
   },
-  
+
   // 계정이 잠금 상태인지 확인
   isLocked(employeeId) {
     const failure = this.failures[employeeId];
     if (!failure) return false;
-    
+
     // 실패 횟수가 최대 허용 횟수 이상인 경우
     if (failure.count >= this.maxFailures) {
       const now = new Date();
       const timeSinceLastFailure = now - failure.lastFailTime;
-      
+
       // 마지막 실패 이후 잠금 시간이 지났는지 확인
       if (timeSinceLastFailure < this.lockDuration) {
         // 아직 잠금 시간 내
@@ -918,7 +943,7 @@ const loginFailureTracker = {
         return { locked: false };
       }
     }
-    
+
     return { locked: false };
   }
 };
@@ -929,19 +954,19 @@ app.post('/api/login', (req, res) => {
   if (!employeeId || !password) { // 사번과 비밀번호 모두 확인
     return res.status(400).json({ error: '사번과 비밀번호를 모두 입력해주세요.' });
   }
-  
+
   // 로그인 잠금 상태 확인
   const lockStatus = loginFailureTracker.isLocked(employeeId);
   if (lockStatus.locked) {
     // 로그인 잠금 상태인 경우
     console.log(`사용자 ${employeeId}의 로그인 요청 거부 (잠금 상태)`);
-    return res.status(429).json({ 
+    return res.status(429).json({
       error: `로그인 실패 횟수 초과. ${lockStatus.remainingMinutes}분 후에 다시 시도해주세요.`
     });
   }
 
   // mustChangePassword 필드도 함께 조회
-  const sql = "SELECT employeeId, name, passwordHash, mustChangePassword FROM users WHERE employeeId = ?"; 
+  const sql = "SELECT employeeId, name, passwordHash, mustChangePassword FROM users WHERE employeeId = ?";
   db.get(sql, [employeeId], (err, user) => {
     if (err) {
       console.error(`로그인 처리 중 DB 오류:`, err.message);
@@ -987,14 +1012,14 @@ app.post('/api/login', (req, res) => {
             // 기존 세션이 있는지 확인
             const existingToken = activeTokens.getUserToken(user.employeeId);
             let sessionMessage = '';
-            
+
             if (existingToken) {
               // 기존 세션이 있으면 메시지 생성
               sessionMessage = '다른 곳에서 로그인한 기존 세션은 종료됩니다.';
               // 로그 기록
               logTaskActivity('SESSION_REPLACED', null, user.employeeId, req.ip);
             }
-            
+
             // 새 토큰을 활성 토큰으로 설정
             activeTokens.setUserToken(user.employeeId, token);
 
@@ -1011,8 +1036,8 @@ app.post('/api/login', (req, res) => {
             });
 
             // 정상 성공 응답 (쿠키에 토큰 포함)
-            res.status(200).json({ 
-              message: '로그인 성공' + (sessionMessage ? '. ' + sessionMessage : ''), 
+            res.status(200).json({
+              message: '로그인 성공' + (sessionMessage ? '. ' + sessionMessage : ''),
               mustChangePassword: false, // 명시적으로 추가
               user: { employeeId: user.employeeId, name: user.name },
               token: token, // 토큰을 응답 본문에도 포함
@@ -1022,18 +1047,18 @@ app.post('/api/login', (req, res) => {
         } else {
           // 비밀번호 불일치 - 실패 카운트 증가
           loginFailureTracker.recordFailure(employeeId);
-          
+
           // 실패 후 잠금 상태 확인
           const lockStatus = loginFailureTracker.isLocked(employeeId);
           if (lockStatus.locked) {
             // 이번 실패로 잠금 상태가 되었다면
-            return res.status(429).json({ 
+            return res.status(429).json({
               error: `로그인 실패 횟수 초과. ${lockStatus.remainingMinutes}분 후에 다시 시도해주세요.`
             });
           } else {
             // 아직 잠금 상태가 아니라면 남은 시도 횟수 알림
             const remainingAttempts = loginFailureTracker.maxFailures - (loginFailureTracker.failures[employeeId]?.count || 0);
-            res.status(401).json({ 
+            res.status(401).json({
               error: `사번 또는 비밀번호가 잘못되었습니다. 남은 시도 횟수: ${remainingAttempts}회`
             });
           }
@@ -1044,7 +1069,7 @@ app.post('/api/login', (req, res) => {
       if (employeeId) {
         loginFailureTracker.recordFailure(employeeId);
       }
-      
+
       // 보안을 위해 사용자가 존재하지 않는다는 정보 노출 방지
       res.status(401).json({ error: '사번 또는 비밀번호가 잘못되었습니다.' });
     }
@@ -1170,6 +1195,54 @@ app.get('/index.html', authenticatePage, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+// --- 404 Handler ---
+// This should be placed after all other routes but before the global error handler
+app.use((req, res, next) => {
+  // For API requests, send a JSON 404 response
+  if (req.accepts('json') && !req.accepts('html')) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+  // For browser requests, send a simple HTML 404 page
+  res.status(404).send('<html><head><title>Error 404: Not Found</title></head><body><h1>404: Page Not Found</h1><p>The page you are looking for does not exist.</p></body></html>');
+});
+
+// --- Global Error Handler ---
+// This should be the last middleware
+app.use((err, req, res, next) => {
+  console.error(`[GLOBAL ERROR HANDLER] Timestamp: ${new Date().toISOString()}, Path: ${req.path}, Error: `, err); // Log the full error server-side
+
+  // Check if headers have already been sent
+  if (res.headersSent) {
+    return next(err); // Delegate to default Express error handler if headers already sent
+  }
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const statusCode = err.status || err.statusCode || 500; // Use error's status or default to 500
+
+  // For API requests, send a JSON error response
+  // Prioritize JSON for API-like requests (e.g., starts with /api/ or accepts json primarily)
+  if (req.path.startsWith('/api/') || (req.accepts('json') && !req.accepts('html'))) {
+    if (isProduction) {
+      res.status(statusCode).json({ error: 'An unexpected error occurred. Please try again later.' });
+    } else {
+      res.status(statusCode).json({ error: err.message, stack: err.stack }); // Detailed error in dev
+    }
+    return;
+  }
+
+  // For browser requests, send a simple HTML error page
+  if (isProduction) {
+    res.status(statusCode).send(`<html><head><title>Error</title></head><body><h1>Server Error</h1><p>An unexpected error occurred. Please try again later.</p></body></html>`);
+  } else {
+    // In development, you might want to use Express's default error handler for HTML pages
+    // or send a more detailed HTML error page. For now, let's send stack for non-prod HTML.
+    res.status(statusCode).send(`<html><head><title>Error</title></head><body><h1>Error ${statusCode}</h1><pre>${err.stack}</pre></body></html>`);
+  }
+});
+
+
 // 6. 서버 시작
 // HTTP 서버 시작 (개발용 또는 리디렉션용)
 app.listen(port, '0.0.0.0', () => {
@@ -1187,7 +1260,7 @@ if (sslOptions && sslOptions.key && sslOptions.cert) {
         console.error('HTTPS 서버 시작 오류:', e);
       }
     });
-    
+
     httpsServer.listen(httpsPort, '0.0.0.0', () => {
       console.log(`HTTPS 서버가 0.0.0.0:${httpsPort} 에서 실행 중입니다.`);
       console.log('HTTPS 활성화됨: HTTPS로 안전하게 접속할 수 있습니다.');
@@ -1216,7 +1289,7 @@ function logTaskActivity(action, taskId, userId, ip = 'unknown') {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1, 두 자리로 패딩
   const day = String(now.getDate()).padStart(2, '0'); // 날짜를 두 자리로 패딩
-  
+
   const dateFolder = `${year}-${month}-${day}`;
   const logDir = path.join(__dirname, 'logs', dateFolder);
 
@@ -1231,18 +1304,18 @@ function logTaskActivity(action, taskId, userId, ip = 'unknown') {
     }
   }
 
-  const timestamp = now.toLocaleString('ko-KR', { 
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit', 
-    hour: '2-digit', 
-    minute: '2-digit', 
+  const timestamp = now.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
     second: '2-digit',
     hour12: false
   });
   const logMessage = `[${timestamp}] ${action}: Task ID: ${taskId}, User ID: ${userId}, IP: ${ip}\n`;
   const logFile = path.join(logDir, 'task_activity_log.txt'); // 수정된 파일 경로
-  
+
   fs.appendFile(logFile, logMessage, (err) => {
     if (err) {
       console.error('로그 파일 작성 오류:', err);
