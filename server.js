@@ -600,7 +600,7 @@ app.get("/api/csrf-token", csrfProtection, (req, res) => {
 // csurf middleware, when applied, automatically checks POST, PUT, DELETE, PATCH.
 // It does NOT check GET, HEAD, OPTIONS by default.
 // So, applying it broadly to '/api' path is fine.
-app.use('/api', csrfProtection);
+// app.use('/api', csrfProtection); // Removed global CSRF for /api, applying selectively
 
 
 app.use('/api', setNoCacheHeaders); // Apply no-cache headers to all API routes
@@ -642,7 +642,7 @@ app.get('/api/auth-status', (req, res) => {
 });
 
 // 로그아웃 API
-app.post('/api/logout', authenticateToken, (req, res) => {
+app.post('/api/logout', csrfProtection, authenticateToken, (req, res) => {
   // 사용자 ID 가져오기 (인증 미들웨어를 통과했으므로 req.user 사용 가능)
   const userId = req.user ? req.user.employeeId : 'unknown';
 
@@ -698,7 +698,7 @@ app.get('/api/data', authenticateToken, (req, res) => {
 });
 
 // POST /api/tasks : 새 태스크 추가 (인증 필요)
-app.post('/api/tasks', authenticateToken, (req, res) => {
+app.post('/api/tasks', csrfProtection, authenticateToken, (req, res) => {
   const { id, columnId, title, description, dueDate, assignees, priority, tags } = req.body;
 
   if (!id || !columnId || !title) {
@@ -747,7 +747,7 @@ app.post('/api/tasks', authenticateToken, (req, res) => {
 });
 
 // PUT /api/tasks/:id : 태스크 수정 (인증 필요)
-app.put('/api/tasks/:id', authenticateToken, (req, res) => {
+app.put('/api/tasks/:id', csrfProtection, authenticateToken, (req, res) => {
   const taskId = req.params.id;
   const currentUserId = req.user.employeeId; // 현재 로그인한 사용자 ID
   const { columnId, title, description, dueDate, assignees, priority, tags, completed } = req.body;
@@ -844,7 +844,7 @@ app.put('/api/tasks/:id', authenticateToken, (req, res) => {
 });
 
 // DELETE /api/tasks/:id : 태스크 삭제 (인증 필요)
-app.delete('/api/tasks/:id', authenticateToken, (req, res) => {
+app.delete('/api/tasks/:id', csrfProtection, authenticateToken, (req, res) => {
   const taskId = req.params.id;
   const currentUserId = req.user.employeeId; // 현재 로그인한 사용자 ID
 
