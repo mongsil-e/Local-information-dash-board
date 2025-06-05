@@ -1,133 +1,104 @@
-# Task Management Dashboard
-
-This project is a task management dashboard application.
-
-## System Architecture
-
-The application is structured as a modern web application with a separate frontend and backend.
-
-### 1. Frontend
-
-*   **Framework:** React (bootstrapped with Vite)
-*   **Location:** `frontend/` directory
-*   **Key Features & Libraries:**
-    *   **UI Components:** Built with React functional components and hooks.
-    *   **Routing:** Client-side routing managed by `react-router-dom`.
-    *   **State Management:**
-        *   `AuthContext`: Manages user authentication state (user details, JWT token status).
-        *   `DataContext`: Manages dashboard data (tasks, columns), including fetching from the backend and providing CRUD helper functions for optimistic updates.
-    *   **Drag and Drop:** Task movement between columns implemented using `@hello-pangea/dnd` (a fork of `react-beautiful-dnd` compatible with React 18+).
-    *   **Styling:** Primarily through global CSS (`frontend/src/index.css`) and component-specific CSS files (e.g., `Header.css`, `TaskModal.css`).
-*   **Build:** The Vite development server (`npm run dev` in `frontend/`) provides hot module replacement and proxies API requests to the backend. For production, `npm run build` in `frontend/` creates optimized static assets in `frontend/dist/`.
-
-### 2. Backend
-
-*   **Framework:** Node.js with Express.js
-*   **Main File:** `server.js` (at the project root)
-*   **Responsibilities:**
-    *   Serves the built React frontend application (static files from `frontend/dist/`).
-    *   Provides a RESTful API for data operations (tasks, columns).
-    *   Handles user authentication (login, logout, password changes) using JWTs (JSON Web Tokens). Tokens are stored in HTTP-only cookies.
-    *   Manages user sessions and provides CSRF protection for secure operations.
-    *   Interacts with the SQLite database for data persistence.
-    *   Includes HTTPS support with self-signed certificate generation (for development/testing).
-    *   Performs activity logging.
-*   **API Endpoints:** All API routes are prefixed with `/api`. Key examples include:
-    *   `/api/login`, `/api/logout`, `/api/change-password`
-    *   `/api/auth-status`, `/api/csrf-token`
-    *   `/api/data` (fetches all tasks and columns)
-    *   `/api/tasks` (CRUD operations for tasks)
-
-### 3. Database
-
-*   **Type:** SQLite
-*   **File:** `database.db` (at the project root)
-*   **Schema:** Includes tables for `users`, `columns`, and `tasks`. Relationships are managed via foreign keys (e.g., `tasks.columnId`, `tasks.creatorId`).
-
-### 4. AI Assistant (Note)
-
-*   The original application had code for integrating with a local AI service (Jan.ai on `http://127.0.0.1:1337`).
-*   While some UI placeholders for this might exist in the React codebase, the full functionality and its current status would need further review if it's a requirement. The backend (`server.js`) does not directly interact with this AI service; it's a client-side integration.
-
-## Getting Started
-
-Follow these instructions to set up and run the application on your local machine.
-
-### Prerequisites
-
-*   **Node.js:** Ensure you have Node.js installed (which includes npm). You can download it from [nodejs.org](https://nodejs.org/). Version 18.x or later is recommended.
-*   **npm or yarn:** A package manager for Node.js. npm is included with Node.js.
-
-### Backend Setup
-
-1.  **Clone the Repository:**
-    ```bash
-    git clone <repository_url>
-    cd <repository_directory>
-    ```
-
-2.  **Configure Environment Variables:**
-    *   The backend requires a `JWT_SECRET` for signing authentication tokens.
-    *   Create a `.env` file in the project root (where `server.js` is located).
-    *   Add the following line to the `.env` file, replacing `your_strong_jwt_secret_here` with a strong, random string:
-        ```env
-        JWT_SECRET=your_strong_jwt_secret_here
-        NODE_ENV=development # Or 'production'
-        ```
-    *   `NODE_ENV` can be set to `development` for local development or `production` for deployment. This affects things like error detail levels and HTTPS redirection.
-
-3.  **Install Backend Dependencies:**
-    *   Navigate to the project root directory (if not already there).
-    *   Run:
-        ```bash
-        npm install
-        ```
-
-4.  **Run the Backend Server:**
-    *   From the project root directory:
-        ```bash
-        node server.js
-        ```
-    *   The backend server will typically start on HTTP port 3000 and HTTPS port 8443 (if SSL certificates are generated/found in an `ssl/` directory). Check the console output for the exact ports.
-    *   The first time you run the server, it might generate self-signed SSL certificates in an `ssl/` directory if they don't exist.
-
-### Frontend Setup
-
-1.  **Navigate to the Frontend Directory:**
-    *   From the project root:
-        ```bash
-        cd frontend
-        ```
-
-2.  **Install Frontend Dependencies:**
-    *   Run:
-        ```bash
-        npm install
-        ```
-
-3.  **Run the Frontend Development Server:**
-    *   From the `frontend/` directory:
-        ```bash
-        npm run dev
-        ```
-    *   This will start the Vite development server, typically on port 5173 (check your console output).
-    *   The development server is configured to proxy API requests starting with `/api` to the backend server (assumed to be running on `http://localhost:3000`).
-
-### Accessing the Application
-
-*   Once both backend and frontend servers are running, open your web browser and navigate to the address provided by the Vite development server (e.g., `http://localhost:5173`).
-*   You should see the login page. After logging in, you'll be redirected to the main dashboard.
-
-### Building for Production (Frontend)
-
-1.  **Navigate to the Frontend Directory:**
-    ```bash
-    cd frontend
-    ```
-2.  **Build the Application:**
-    ```bash
-    npm run build
-    ```
-    This command compiles the React application into static assets located in the `frontend/dist/` directory.
-3.  **Serving the Production Build:**
-    *   When the backend server (`server.js`) is run (especially with `NODE_ENV=production`), it is configured to serve the static files from `frontend/dist/`. So, after building the frontend, running `node server.js` from the project root will serve the production-ready version of the entire application.
+작업 관리 대시보드 (Task Management Dashboard)
+이 프로젝트는 작업 관리 대시보드 애플리케이션입니다.
+시스템 아키텍처
+이 애플리케이션은 프론트엔드와 백엔드가 분리된 현대적인 웹 애플리케이션 구조를 가집니다.
+1. 프론트엔드 (Frontend)
+프레임워크: React (Vite를 사용하여 구성됨)
+위치: frontend/ 디렉토리
+주요 기능 및 라이브러리:
+UI 컴포넌트: React 함수형 컴포넌트와 훅(hook)을 사용하여 구축되었습니다.
+라우팅: react-router-dom을 통해 클라이언트 사이드 라우팅을 관리합니다.
+상태 관리:
+AuthContext: 사용자 인증 상태(사용자 정보, JWT 토큰 상태)를 관리합니다.
+DataContext: 대시보드 데이터(작업, 컬럼)를 관리하며, 백엔드로부터 데이터를 가져오고 낙관적 업데이트(optimistic updates)를 위한 CRUD 헬퍼 함수를 제공합니다.
+드래그 앤 드롭: @hello-pangea/dnd(React 18+와 호환되는 react-beautiful-dnd의 포크 버전)를 사용하여 컬럼 간 작업 이동을 구현했습니다.
+스타일링: 주로 전역 CSS(frontend/src/index.css)와 컴포넌트별 CSS 파일(예: Header.css, TaskModal.css)을 통해 이루어집니다.
+빌드: Vite 개발 서버(frontend/에서 npm run dev 실행)는 HMR(Hot Module Replacement) 기능을 제공하고 API 요청을 백엔드로 프록시(proxy)합니다. 프로덕션용으로는 frontend/에서 npm run build를 실행하여 frontend/dist/에 최적화된 정적 에셋(static assets)을 생성합니다.
+2. 백엔드 (Backend)
+프레임워크: Node.js와 Express.js
+메인 파일: server.js (프로젝트 루트 위치)
+주요 기능:
+빌드된 React 프론트엔드 애플리케이션을 제공합니다 (frontend/dist/의 정적 파일).
+데이터 작업(작업, 컬럼)을 위한 RESTful API를 제공합니다.
+JWT(JSON Web Tokens)를 사용하여 사용자 인증(로그인, 로그아웃, 비밀번호 변경)을 처리합니다. 토큰은 HTTP-only 쿠키에 저장됩니다.
+사용자 세션을 관리하고 안전한 작업을 위해 CSRF 보호 기능을 제공합니다.
+데이터 영속성(persistence)을 위해 SQLite 데이터베이스와 상호작용합니다.
+자체 서명 인증서 생성을 통한 HTTPS를 지원합니다 (개발/테스트용).
+활동 로그를 기록합니다.
+API 엔드포인트: 모든 API 경로는 /api 접두사로 시작됩니다. 주요 예시는 다음과 같습니다:
+/api/login, /api/logout, /api/change-password
+/api/auth-status, /api/csrf-token
+/api/data (모든 작업과 컬럼을 가져옴)
+/api/tasks (작업에 대한 CRUD 작업)
+3. 데이터베이스 (Database)
+유형: SQLite
+파일: database.db (프로젝트 루트 위치)
+스키마: users, columns, tasks 테이블을 포함합니다. 관계는 외래 키(foreign key)(예: tasks.columnId, tasks.creatorId)를 통해 관리됩니다.
+4. AI 어시스턴트 (참고)
+원본 애플리케이션에는 로컬 AI 서비스(http://127.0.0.1:1337의 Jan.ai)와 통합하기 위한 코드가 있었습니다.
+React 코드베이스에 이를 위한 일부 UI 플레이스홀더가 존재할 수 있지만, 전체 기능과 현재 상태는 요구사항일 경우 추가적인 검토가 필요합니다. 백엔드(server.js)는 이 AI 서비스와 직접 상호작용하지 않으며, 이는 클라이언트 사이드 통합입니다.
+시작하기
+로컬 머신에서 애플리케이션을 설정하고 실행하려면 다음 지침을 따르세요.
+사전 요구사항
+Node.js: Node.js가 설치되어 있는지 확인하세요 (npm 포함). nodejs.org에서 다운로드할 수 있습니다. 버전 18.x 이상을 권장합니다.
+npm 또는 yarn: Node.js용 패키지 매니저. npm은 Node.js에 포함되어 있습니다.
+백엔드 설정
+리포지토리 복제(Clone):
+git clone <repository_url>
+cd <repository_directory>
+Use code with caution.
+Bash
+환경 변수 설정:
+백엔드는 인증 토큰 서명을 위해 JWT_SECRET이 필요합니다.
+프로젝트 루트(server.js가 있는 위치)에 .env 파일을 생성하세요.
+다음 줄을 .env 파일에 추가하고, your_strong_jwt_secret_here를 강력하고 무작위적인 문자열로 교체하세요:
+JWT_SECRET=your_strong_jwt_secret_here
+NODE_ENV=development # 또는 'production'
+Use code with caution.
+NODE_ENV는 로컬 개발 시 development로, 배포 시 production으로 설정할 수 있습니다. 이는 오류 상세 정보 수준이나 HTTPS 리디렉션 등에 영향을 줍니다.
+백엔드 의존성 설치:
+프로젝트 루트 디렉토리로 이동합니다 (이미 있는 경우 생략).
+다음 명령어를 실행하세요:
+npm install
+Use code with caution.
+Bash
+백엔드 서버 실행:
+프로젝트 루트 디렉토리에서 다음을 실행하세요:
+node server.js
+Use code with caution.
+Bash
+백엔드 서버는 일반적으로 HTTP 포트 3000과 HTTPS 포트 8443에서 시작됩니다 (ssl/ 디렉토리에 SSL 인증서가 생성/발견될 경우). 정확한 포트는 콘솔 출력을 확인하세요.
+서버를 처음 실행할 때, ssl/ 디렉토리가 없으면 자체 서명된 SSL 인증서가 생성될 수 있습니다.
+프론트엔드 설정
+프론트엔드 디렉토리로 이동:
+프로젝트 루트에서 다음을 실행하세요:
+cd frontend
+Use code with caution.
+Bash
+프론트엔드 의존성 설치:
+다음 명령어를 실행하세요:
+npm install
+Use code with caution.
+Bash
+프론트엔드 개발 서버 실행:
+frontend/ 디렉토리에서 다음을 실행하세요:
+npm run dev
+Use code with caution.
+Bash
+이 명령어는 Vite 개발 서버를 시작하며, 일반적으로 포트 5173에서 실행됩니다 (콘솔 출력을 확인하세요).
+개발 서버는 /api로 시작하는 API 요청을 백엔드 서버(http://localhost:3000에서 실행 중이라고 가정)로 프록시하도록 설정되어 있습니다.
+애플리케이션 접속하기
+백엔드와 프론트엔드 서버가 모두 실행되면, 웹 브라우저를 열고 Vite 개발 서버가 제공하는 주소(예: http://localhost:5173)로 이동하세요.
+로그인 페이지가 나타날 것입니다. 로그인하면 메인 대시보드로 리디렉션됩니다.
+프로덕션용 빌드 (프론트엔드)
+프론트엔드 디렉토리로 이동:
+cd frontend
+Use code with caution.
+Bash
+애플리케이션 빌드:
+npm run build
+Use code with caution.
+Bash
+이 명령어는 React 애플리케이션을 컴파일하여 frontend/dist/ 디렉토리에 정적 에셋(static assets)으로 생성합니다.
+프로덕션 빌드 실행하기:
+백엔드 서버(server.js)가 실행될 때 (특히 NODE_ENV=production 환경에서), frontend/dist/의 정적 파일을 제공하도록 설정되어 있습니다. 따라서 프론트엔드를 빌드한 후, 프로젝트 루트에서 node server.js를 실행하면 전체 애플리케이션의 프로덕션 준비 버전을 제공하게 됩니다.
