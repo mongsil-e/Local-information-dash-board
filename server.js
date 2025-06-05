@@ -64,7 +64,7 @@ const setNoCacheHeaders = (req, res, next) => {
   next();
 };
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
 // HSTS 헤더 설정 미들웨어
 app.use((req, res, next) => {
@@ -581,7 +581,7 @@ app.get('/', authenticatePage, (req, res) => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
 
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
 
@@ -1237,9 +1237,20 @@ app.get('/index.html', authenticatePage, (req, res) => {
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
 
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
+// Catch-all route to serve React app (must be before 404 handler)
+app.get('*', authenticatePage, (req, res) => {
+  // For any GET request not handled by static files or specific API routes,
+  // serve the main index.html. React Router will handle the client-side routing.
+  // Ensure Cache-Control headers are set here as well if this serves the main app page
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
 
 // --- 404 Handler ---
 // This should be placed after all other routes but before the global error handler
