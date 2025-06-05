@@ -1,0 +1,19 @@
+/* Styles for PgmHistoryView component */
+/* .main-columns-container is the top-level class used by PgmHistoryView */
+/* This class might already be in global index.css, if so, this file might be minimal */
+
+.main-columns-container {
+    display: flex; /* Main PGM columns (AVI, ATTACH) arranged horizontally */
+    gap: 20px; /* Gap between AVI and ATTACH columns */
+    width: 100%;
+    /* Example height, adjust as needed or let content define height */
+    /* min-height: calc(80vh - 180px); */
+    /* max-height: 70vh; */
+}
+
+/* Responsive adjustments for PGM view if needed */
+@media (max-width: 992px) { /* Example breakpoint */
+    .main-columns-container {
+        flex-direction: column; /* Stack AVI and ATTACH vertically on smaller screens */
+    }
+}

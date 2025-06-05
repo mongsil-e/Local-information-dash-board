@@ -1,0 +1,129 @@
+/* Styles for TaskModal component */
+
+/* Basic Modal Styles (can be adjusted or rely on global styles) */
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex; /* Hidden by default, shown by 'visible' class */
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  visibility: hidden; /* ensure it's not focusable when not visible */
+}
+
+.modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal__content {
+  background-color: var(--column-bg); /* Use CSS variable for background */
+  padding: 24px;
+  border-radius: var(--border-radius-md);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+.modal.visible .modal__content {
+  transform: scale(1);
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.modal__close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-secondary-color);
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.modal__close:hover {
+  color: var(--text-color);
+}
+
+/* Form Styles (can rely on global .form-group, .btn from index.css or be specific) */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group__label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text-color);
+}
+
+/* Specific for TagInput if needed */
+.form-group__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px; /* Space before the input field */
+}
+
+.form-group__tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 8px;
+  background-color: var(--secondary-color);
+  border-radius: var(--border-radius-sm);
+  gap: 4px;
+  color: var(--text-color);
+}
+
+.form-group__tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary-color);
+  font-size: 14px; /* Slightly larger for easier click */
+  padding: 0;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+.form-group__tag-remove:hover {
+  color: var(--danger-color);
+}
+
+.form-group__tag-input {
+  /* Uses global .form-group__input styles by default if class is applied */
+  /* Add specific overrides if necessary */
+  margin-top: 4px; /* Ensure some space if tags wrap */
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
