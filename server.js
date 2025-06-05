@@ -294,12 +294,12 @@ function initializeDatabase() {
         // console.log("Columns 테이블이 준비되었습니다.");
         // console.log(`[${new Date().toISOString()}] Columns 테이블 생성 성공 또는 이미 존재.`); // 로그 삭제
         // 기본 컬럼 데이터 추가 (처음 한 번만 실행됨)
-        const defaultColumns = [
-            { id: 'gotowork', title: '지시 사항', ord: 0 },
-            { id: 'information', title: '특이 사항', ord: 1 },
-            { id: 'todowork', title: '할일', ord: 2 },
-            { id: 'inprogress', title: '진행중', ord: 3 },
-            { id: 'welldone', title: '완료', ord: 4 }
+const defaultColumns = [
+            { id: "gotowork", title: "지시 사항", ord: 0 },
+            { id: "information", title: "특이 사항", ord: 1 },
+            { id: "todowork", title: "할일", ord: 2 },
+            { id: "inprogress", title: "진행중", ord: 3 },
+            { id: "welldone", title: "완료", ord: 4 }
         ];
         // INSERT OR IGNORE: id가 이미 존재하면 무시하고 넘어감
         const stmt = db.prepare("INSERT OR IGNORE INTO columns (id, title, ord) VALUES (?, ?, ?)");

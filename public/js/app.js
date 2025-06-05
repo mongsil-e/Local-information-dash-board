@@ -115,6 +115,7 @@
                     const data = await response.json();
                     if (data.csrfToken) {
                         csrfToken = data.csrfToken;
+                        window.globalCsrfToken = csrfToken; // Make it global
                         console.log("CSRF token fetched and stored successfully.");
                     } else {
                         throw new Error("CSRF token not found in server response.");
@@ -122,6 +123,7 @@
                 } catch (error) {
                     console.error("Error fetching CSRF token:", error);
                     csrfToken = null; // Ensure it is null on failure
+                    window.globalCsrfToken = null; // Reset global on error
                     // Consider displaying a persistent error message to the user here
                     // as state-changing operations will fail.
                     // Example: utils.showPersistentError("Failed to initialize security token. Application may not function correctly.");
@@ -3534,14 +3536,14 @@
         async function fetchWithAuth(url, options = {}) {
             try {
                 // Add CSRF token to headers for non-GET/HEAD/OPTIONS requests
-                if (csrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+                if (window.globalCsrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
                     options.headers = {
                         ...options.headers,
-                        'CSRF-Token': csrfToken // Standard header name for csurf
+                        'CSRF-Token': window.globalCsrfToken // Standard header name for csurf
                     };
                 } else if (!options.method || ['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
                     // For GET or other safe methods, no CSRF token needed
-                } else if (!csrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
+                } else if (!window.globalCsrfToken && options.method && !['GET', 'HEAD', 'OPTIONS'].includes(options.method.toUpperCase())) {
                     console.warn('CSRF token is not available. State-changing request might fail.');
                     // Optionally, prevent the request or alert the user
                 }
