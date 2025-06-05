@@ -1,0 +1,50 @@
+/* Styles for PgmSubColumn component */
+/* .sub-column, .sub-column-header, .sub-column-title, .sub-column-add-btn, .sub-column-content */
+/* These classes can be copied or adapted from the global index.css if they were defined there */
+
+.sub-column {
+    flex: 1;
+    background-color: var(--secondary-color); /* Light background for sub-columns */
+    border-radius: var(--border-radius-sm);
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Important for managing overflow in content */
+}
+
+.sub-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.sub-column-title {
+    font-size: 14px; /* Slightly smaller than main column titles */
+    font-weight: 600;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+}
+
+.sub-column-add-btn {
+    /* Uses .action-btn and .action-btn--add from global styles */
+    /* Specific overrides if needed: */
+    padding: 2px; /* Adjust if necessary */
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.sub-column-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Enable scroll for tasks */
+    padding: 5px; /* Optional padding for content area */
+    min-height: 100px; /* Ensure a minimum height */
+}
+
+/* .empty-state will be inherited from global styles if tasks are empty */

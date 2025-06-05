@@ -1,0 +1,33 @@
+/* Styles for PgmMainColumn component */
+/* .main-column, .main-column-title, .sub-columns-container */
+/* These classes can be copied or adapted from the global index.css if they were defined there */
+
+.main-column {
+    flex: 1; /* Each main PGM column (AVI, ATTACH) takes equal width */
+    background-color: var(--column-bg); /* Main background for the entire column */
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--box-shadow);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Could be an issue if content is too tall, consider overflow-y: auto for sub-columns-container if needed */
+    /* min-height: calc(80vh - 220px); /* Example height, adjust as needed */
+}
+
+.main-column-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-color);
+    flex-shrink: 0; /* Title should not shrink */
+}
+
+.sub-columns-container {
+    display: flex;
+    gap: 10px; /* Gap between sub-columns (e.g., Main PGM and Vision PGM) */
+    flex-grow: 1; /* Allows this container to fill the vertical space of main-column */
+    min-height: 0; /* Fix for flex children with overflow */
+}

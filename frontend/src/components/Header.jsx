@@ -1,20 +1,42 @@
 // frontend/src/components/Header.jsx
-import React from 'react'; // Ensure React is imported if not already
-import './Header.css'; // Import the CSS file
+import React from 'react';
+import { useAuth } from '../contexts/AuthContext'; // Corrected path
+import './Header.css';
 
 function Header() {
-  // Placeholder data/handlers for now
-  const userName = "PKG 설비 2파트"; // Will come from auth context later
-  const handleLogout = () => console.log("Logout clicked"); // Will be implemented later
-  const handleThemeToggle = () => console.log("Theme toggle clicked"); // Will be implemented later
+  const { isAuthenticated, user, logout } = useAuth();
+
+  const handleThemeToggle = () => {
+    console.log("Theme toggle clicked"); // Actual theme toggle logic will be later
+    // Example: document.body.classList.toggle('theme-dark');
+  };
 
   return (
     <header className="header">
       <div className="header__logo">인폼 현황판</div>
       <div className="header__user-area">
-        <div className="header__user-name" id="userInfo">{userName}</div>
-        <button id="logoutButton" className="btn btn--secondary" onClick={handleLogout}>로그아웃</button>
-        <button className="header__theme-toggle" aria-label="테마 전환 (라이트/다크)" onClick={handleThemeToggle}>🌓</button>
+        {isAuthenticated && user && ( // Ensure user object exists
+          <>
+            <div className="header__user-name" id="userInfo">
+              {user.name || user.employeeId || 'User'} {/* Display name or ID, fallback to 'User' */}
+            </div>
+            <button
+              id="logoutButton"
+              className="btn btn--secondary"
+              onClick={logout} // Use logout from context
+            >
+              로그아웃
+            </button>
+          </>
+        )}
+        {/* Theme toggle is always visible */}
+        <button
+          className="header__theme-toggle"
+          aria-label="테마 전환 (라이트/다크)"
+          onClick={handleThemeToggle}
+        >
+          🌓
+        </button>
       </div>
     </header>
   );
